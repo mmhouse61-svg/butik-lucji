@@ -1,1 +1,212 @@
-<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=butik/"><a href="butik/">Butik Łucji</a>
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f48fb1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Butik">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Butik Łucji</title>
+<style>
+  :root { --bg:#fff4f8; --card:#fff; --pink:#f48fb1; --dark:#6a1b4d; --gold:#ffc107; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); -webkit-user-select:none; user-select:none; font-family:"Trebuchet MS",sans-serif; background:var(--bg); color:var(--dark); }
+  header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--pink); color:#fff; }
+  header h1 { margin:0; font-size:1.3rem; }
+  #coins { font-size:1.3rem; font-weight:bold; background:#fff; color:var(--dark); padding:4px 14px; border-radius:20px; }
+  main { max-width:900px; margin:0 auto; padding:12px; display:grid; gap:12px; }
+  section { background:var(--card); border-radius:16px; padding:14px; box-shadow:0 2px 8px #0001; }
+  h2 { margin:0 0 10px; font-size:1.1rem; }
+  .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  button { touch-action:manipulation; font:inherit; border:2px solid var(--pink); background:#fff; color:var(--dark); border-radius:12px; padding:8px 12px; cursor:pointer; }
+  button.sel { background:var(--pink); color:#fff; }
+  button.main { background:var(--gold); border-color:var(--gold); font-weight:bold; }
+  button:disabled { opacity:.4; cursor:not-allowed; }
+  .sw { width:34px; height:34px; border-radius:50%; padding:0; border:3px solid #fff; box-shadow:0 0 0 2px #ccc; }
+  .sw.sel { box-shadow:0 0 0 3px var(--dark); }
+  #preview { width:160px; height:190px; background:#fce4ec; border-radius:12px; }
+  .shelf { display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:8px; }
+  .item { text-align:center; border:2px dashed #e0b; border-radius:12px; padding:6px; background:#fff8fb; min-height:130px; }
+  .item.click { cursor:pointer; border-style:solid; }
+  .item.click:hover { background:#ffe3ef; }
+  .item svg { width:80px; height:95px; }
+  .customer { font-size:1.05rem; min-height:60px; display:flex; align-items:center; gap:12px; }
+  .customer .face { font-size:2.4rem; }
+  #msg { min-height:1.4em; font-weight:bold; }
+  .place { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #f3d; }
+  .place:last-child { border:none; }
+  .locked { opacity:.55; }
+</style>
+</head>
+<body>
+<header><h1>👗 Butik Łucji</h1><div id="coins">0 🪙</div></header>
+<main>
+  <section>
+    <h2>🛎️ Klientka</h2>
+    <div class="customer" id="customer">Czekam na klientkę…</div>
+    <div id="msg"></div>
+  </section>
+
+  <section>
+    <h2>🪞 Półka sklepowa (kliknij ubranie, żeby sprzedać)</h2>
+    <div class="shelf" id="shelf"></div>
+  </section>
+
+  <section>
+    <h2>✏️ Pracownia – zaprojektuj ubranie</h2>
+    <div class="row">
+      <svg id="preview" viewBox="0 0 100 120"></svg>
+      <div>
+        <div class="row" id="types"></div><br>
+        <div class="row" id="colors"></div><br>
+        <div class="row" id="patterns"></div><br>
+        <button class="main" id="make">✂️ Uszyj (<span id="cost">10</span> 🪙)</button>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>📍 Moje sklepy we Wrocławiu</h2>
+    <div id="places"></div>
+  </section>
+</main>
+
+<script>
+const TYPES = {
+  sukienka:{ name:"Sukienka", price:20, path:"M35 15 L45 15 Q50 25 55 15 L65 15 L68 45 L82 105 L18 105 L32 45 Z" },
+  spodnie: { name:"Spodnie",  price:15, path:"M30 15 L70 15 L72 45 L66 108 L53 108 L50 55 L47 108 L34 108 L28 45 Z" },
+  bluza:   { name:"Bluza",    price:18, path:"M35 15 Q50 28 65 15 L88 40 L78 55 L70 48 L70 100 L30 100 L30 48 L22 55 L12 40 Z" },
+  spodnica:{ name:"Spódnica", price:12, path:"M32 25 L68 25 L72 40 L88 105 L12 105 L28 40 Z" }
+};
+const COLORS = { czerwony:"#e53935", niebieski:"#1e88e5", zielony:"#43a047", żółty:"#fdd835", różowy:"#f06292", fioletowy:"#8e24aa" };
+const PATTERNS = {
+  gładki:  { name:"Gładki",  bonus:0,  unlock:0 },
+  kropki:  { name:"Kropki",  bonus:5,  unlock:0 },
+  paski:   { name:"Paski",   bonus:6,  unlock:60 },
+  kratka:  { name:"Kratka",  bonus:8,  unlock:120 },
+  gwiazdki:{ name:"Gwiazdki",bonus:10, unlock:200 }
+};
+const PLACES = [
+  { id:"rynek",   name:"Rynek",           cost:0,   mult:1,   every:7000 },
+  { id:"hala",    name:"Hala Targowa",    cost:100, mult:1.3, every:6000 },
+  { id:"wyspa",   name:"Wyspa Słodowa",   cost:250, mult:1.7, every:5000 },
+  { id:"ostrow",  name:"Ostrów Tumski",   cost:500, mult:2.2, every:4000 }
+];
+const SHELF_SIZE = 6, MAKE_COST = 10;
+
+let S = load() || { coins:50, shelf:[], places:["rynek"], patterns:["gładki","kropki"] };
+let draft = { type:"sukienka", color:"różowy", pattern:"gładki" };
+let customer = null, timer = null;
+
+function load(){ try { return JSON.parse(localStorage.getItem("butik")); } catch(e){ return null; } }
+function save(){ try { localStorage.setItem("butik", JSON.stringify(S)); } catch(e){} }
+const $ = id => document.getElementById(id);
+const rnd = a => a[Math.floor(Math.random()*a.length)];
+
+function patternDefs(color){
+  return `<defs>
+    <pattern id="p-kropki" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="${color}"/><circle cx="6" cy="6" r="2.5" fill="#fff"/></pattern>
+    <pattern id="p-paski" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="${color}"/><rect width="12" height="5" fill="#fff"/></pattern>
+    <pattern id="p-kratka" width="14" height="14" patternUnits="userSpaceOnUse"><rect width="14" height="14" fill="${color}"/><path d="M0 7H14M7 0V14" stroke="#fff" stroke-width="2"/></pattern>
+    <pattern id="p-gwiazdki" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="16" fill="${color}"/><text x="8" y="12" font-size="11" text-anchor="middle" fill="#fff">★</text></pattern>
+  </defs>`;
+}
+function clothSVG(it, uid){
+  const c = COLORS[it.color];
+  const fill = it.pattern==="gładki" ? c : `url(#p-${it.pattern})`;
+  return patternDefs(c).replace(/id="p-/g,`id="${uid}p-`) +
+    `<path d="${TYPES[it.type].path}" fill="${fill.replace('url(#','url(#'+uid)}" stroke="#0004" stroke-width="1.5"/>`;
+}
+function price(it){
+  const m = PLACES.filter(p=>S.places.includes(p.id)).reduce((a,p)=>Math.max(a,p.mult),1);
+  return Math.round((TYPES[it.type].price + PATTERNS[it.pattern].bonus) * m);
+}
+
+function renderDesigner(){
+  $("types").innerHTML = Object.entries(TYPES).map(([k,v])=>`<button class="${draft.type===k?'sel':''}" onclick="draft.type='${k}';renderDesigner()">${v.name}</button>`).join("");
+  $("colors").innerHTML = Object.entries(COLORS).map(([k,v])=>`<button class="sw ${draft.color===k?'sel':''}" style="background:${v}" title="${k}" onclick="draft.color='${k}';renderDesigner()"></button>`).join("");
+  $("patterns").innerHTML = Object.entries(PATTERNS).map(([k,v])=>{
+    if (S.patterns.includes(k)) return `<button class="${draft.pattern===k?'sel':''}" onclick="draft.pattern='${k}';renderDesigner()">${v.name}</button>`;
+    return `<button class="locked" ${S.coins<v.unlock?'disabled':''} onclick="buyPattern('${k}')">🔒 ${v.name} (${v.unlock} 🪙)</button>`;
+  }).join("");
+  $("preview").innerHTML = clothSVG(draft,"pv");
+  $("cost").textContent = MAKE_COST;
+  $("make").disabled = S.coins < MAKE_COST || S.shelf.length >= SHELF_SIZE;
+  $("make").title = S.shelf.length >= SHELF_SIZE ? "Półka jest pełna" : "";
+}
+function renderShelf(){
+  let h = "";
+  for (let i=0;i<SHELF_SIZE;i++){
+    const it = S.shelf[i];
+    h += it
+      ? `<div class="item click" onclick="sell(${i})"><svg viewBox="0 0 100 120">${clothSVG(it,'s'+i)}</svg><div>${price(it)} 🪙</div></div>`
+      : `<div class="item">pusto</div>`;
+  }
+  $("shelf").innerHTML = h;
+}
+function renderPlaces(){
+  $("places").innerHTML = PLACES.map(p=>{
+    const own = S.places.includes(p.id);
+    return `<div class="place ${own?'':'locked'}"><span>${own?'✅':'🔒'} <b>${p.name}</b> – ceny ×${p.mult}, klientki co ${p.every/1000}s</span>` +
+      (own ? "" : `<button ${S.coins<p.cost?'disabled':''} onclick="buyPlace('${p.id}')">Otwórz (${p.cost} 🪙)</button>`) + `</div>`;
+  }).join("");
+}
+function renderAll(){ $("coins").textContent = S.coins+" 🪙"; renderDesigner(); renderShelf(); renderPlaces(); renderCustomer(); save(); }
+
+function renderCustomer(){
+  $("customer").innerHTML = customer
+    ? `<span class="face">${customer.face}</span><span>Dzień dobry! Szukam: <b>${customer.color} ${TYPES[customer.type].name.toLowerCase()}</b>. Coś ładnego, proszę 😊</span>`
+    : `<span class="face">☕</span><span>Czekam na klientkę…</span>`;
+}
+function say(t){ $("msg").textContent = t; }
+
+function make(){
+  if (S.coins < MAKE_COST || S.shelf.length >= SHELF_SIZE) return;
+  S.coins -= MAKE_COST;
+  S.shelf.push({ ...draft });
+  say("Nowe ubranie na półce! ✨");
+  renderAll();
+}
+function sell(i){
+  if (!customer) { say("Nie ma teraz klientki. Poczekaj chwilę 🙂"); return; }
+  const it = S.shelf[i];
+  const matchT = it.type===customer.type, matchC = it.color===customer.color;
+  let mult = 1, txt = "Dziękuję, jakoś się przyda!";
+  if (matchT && matchC){ mult = 2;   txt = "Dokładnie takie chciałam! 😍 Podwójna cena!"; }
+  else if (matchT || matchC){ mult = 1.5; txt = "Prawie jak chciałam, bardzo ładne! 💕"; }
+  const gain = Math.round(price(it)*mult);
+  S.coins += gain; S.shelf.splice(i,1);
+  say(`${txt} +${gain} 🪙`);
+  customer = null;
+  scheduleCustomer();
+  renderAll();
+}
+function buyPattern(k){ const p=PATTERNS[k]; if (S.coins<p.unlock) return; S.coins-=p.unlock; S.patterns.push(k); draft.pattern=k; say(`Nowy wzór: ${p.name}! 🎨`); renderAll(); }
+function buyPlace(id){ const p=PLACES.find(x=>x.id===id); if (S.coins<p.cost) return; S.coins-=p.cost; S.places.push(id); say(`Otwierasz sklep: ${p.name}! 🎉`); scheduleCustomer(true); renderAll(); }
+
+function interval(){ return Math.min(...PLACES.filter(p=>S.places.includes(p.id)).map(p=>p.every)); }
+function scheduleCustomer(reset){
+  clearTimeout(timer);
+  timer = setTimeout(()=>{
+    if (!customer){
+      customer = { face:rnd(["👩","👧","👵","👩‍🦰","🧑‍🦱","👱‍♀️"]), type:rnd(Object.keys(TYPES)), color:rnd(Object.keys(COLORS)) };
+      renderCustomer();
+    }
+    scheduleCustomer();
+  }, interval());
+}
+
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+
+$("make").onclick = make;
+renderAll();
+scheduleCustomer();
+// pierwsza klientka od razu, żeby nie czekać
+setTimeout(()=>{ if(!customer){ customer={face:"👩",type:"sukienka",color:"różowy"}; renderCustomer(); } }, 1500);
+</script>
+</body>
+</html>
