@@ -143,7 +143,7 @@
     header h1 { font-size:1.6rem; }
     #coins { font-size:1.05rem; padding:2px 12px 2px 5px; }
     #mute { width:34px; height:34px; }
-    #hero { height:78px; }
+    #hero { height:128px; }
     main { gap:8px; padding-bottom:16px; }
     section { padding:8px 14px 10px; border-radius:18px; }
     section::before { inset:4px; border-radius:14px; }
@@ -361,7 +361,7 @@ function buildHero(){
   let h = `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop id="sk0" offset="0" stop-color="#6c3fa0"/><stop id="sk1" offset=".55" stop-color="#e58fb5"/><stop id="sk2" offset="1" stop-color="#ffd9a0"/></linearGradient></defs>
   <rect y="-24" width="600" height="174" fill="url(#sky)"/>
   <circle id="orb" r="22" fill="#fff3c4" opacity=".95" style="transform:translate(470px,62px)"/>
-  <g id="stars" fill="#fff" opacity=".85"><circle cx="40" cy="22" r="1.5"/><circle cx="120" cy="40" r="1.2"/><circle cx="210" cy="16" r="1.6"/><circle cx="330" cy="30" r="1.3"/><circle cx="410" cy="14" r="1.5"/><circle cx="560" cy="28" r="1.4"/><circle cx="520" cy="10" r="1.1"/></g>
+  <g id="stars" fill="#fff" opacity=".85" transform="translate(0,48)"><circle cx="40" cy="22" r="1.5"/><circle cx="120" cy="40" r="1.2"/><circle cx="210" cy="16" r="1.6"/><circle cx="330" cy="30" r="1.3"/><circle cx="410" cy="14" r="1.5"/><circle cx="560" cy="28" r="1.4"/><circle cx="520" cy="10" r="1.1"/></g>
   <g id="clouds" fill="#fff" opacity=".35"><ellipse cx="120" cy="64" rx="38" ry="9"/><ellipse cx="148" cy="58" rx="22" ry="8"/><ellipse cx="380" cy="48" rx="34" ry="8"/></g>`;
   // kamieniczki z szczytami
   const hs = [58,74,64,82,60,0,0,0,70,56,80,66,76,60];
@@ -397,9 +397,9 @@ function buildHero(){
 const DAY_MS = 8*60*1000;
 const SKIES = [
   { g:["#7fb2e5","#ffc9b0","#fff0c8"], orb:["#ffe49a",120,92], stars:0,   clouds:.55 },  // poranek
-  { g:["#4a9ee0","#9fd0f5","#e8f6ff"], orb:["#fff3a8",470,38], stars:0,   clouds:.9 },   // dzień
+  { g:["#4a9ee0","#9fd0f5","#e8f6ff"], orb:["#fff3a8",470,64], stars:0,   clouds:.9 },   // dzień
   { g:["#6c3fa0","#e58fb5","#ffd9a0"], orb:["#fff3c4",470,62], stars:.3,  clouds:.35 },  // zachód
-  { g:["#1b1245","#3d2a7a","#7a4f9e"], orb:["#f4f1ff",470,48], stars:1,   clouds:.12 }   // noc
+  { g:["#1b1245","#3d2a7a","#7a4f9e"], orb:["#f4f1ff",470,66], stars:1,   clouds:.12 }   // noc
 ];
 let skyNow = -1;
 function applySky(){
