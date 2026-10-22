@@ -343,14 +343,14 @@ function figureSVG(bags, thief){
   const skin = rnd(["#ffd6b3","#f2c19a","#d9a074"]);
   const bagCol = rnd(["#ff7aa8","#ffd45e","#7fd1b9","#9db7ff"]);
   const bag = n => `<g transform="translate(${n?-13:11} ${n?-4:-2})"><path d="M2 -9 Q5 -15 8 -9" fill="none" stroke="#6b4a2a" stroke-width="1.2"/><rect width="10" height="11" y="-9" rx="1.5" fill="${bagCol}" stroke="#fff" stroke-width="1"/><path d="M5 -5 l1 2 -1 2 -1 -2z" fill="#fff"/></g>`;
-  if (thief) return `<ellipse cx="0" cy="1" rx="9" ry="2.5" fill="#0003"/>
-    <rect x="-5" y="-10" width="3" height="10" fill="#2b2233"/><rect x="2" y="-10" width="3" height="10" fill="#2b2233"/>
-    <rect x="-6" y="-2" width="5" height="3" rx="1.5" fill="#111"/><rect x="1" y="-2" width="5" height="3" rx="1.5" fill="#111"/>
-    <polygon points="-11,-8 -5,-30 5,-30 11,-8" fill="#3a2f4d"/><rect x="-1" y="-30" width="2" height="22" fill="#2b2233"/>
-    <circle cx="0" cy="-34" r="6.5" fill="${skin}"/>
-    <rect x="-6.5" y="-36.5" width="13" height="4.5" rx="1.5" fill="#111"/><circle cx="-2.4" cy="-34.3" r="1.1" fill="#fff"/><circle cx="2.4" cy="-34.3" r="1.1" fill="#fff"/>
-    <path d="M-9 -40 Q0 -50 9 -40 L11 -38 Q0 -42 -11 -38Z" fill="#2b2233"/><rect x="-8" y="-41" width="16" height="3" fill="#8c1f3a"/>
-    ${bags>0 ? `<g transform="translate(11 -2)"><path d="M2 -9 Q5 -15 8 -9" fill="none" stroke="#111" stroke-width="1.2"/><rect width="10" height="11" y="-9" rx="1.5" fill="#fff" stroke="#111" stroke-width="1"/><path d="M0 -6H10M0 -2H10" stroke="#111" stroke-width="1.6"/></g>` : ""}`;
+  if (thief) return `<ellipse cx="0" cy="1" rx="10" ry="2.5" fill="#0003"/>
+    <rect x="-7" y="-4" width="6" height="5" rx="2" fill="#111"/><rect x="1" y="-4" width="6" height="5" rx="2" fill="#111"/>
+    <rect x="-7" y="-20" width="14" height="17" rx="5" fill="#2b2233"/><rect x="-7" y="-13" width="14" height="3" fill="#8c1f3a"/>
+    <circle cx="0" cy="-26" r="7" fill="#e9b794"/>
+    <path d="M-7 -24 Q0 -8 7 -24 Q0 -19 -7 -24Z" fill="#9a8fb0"/>
+    <polygon points="-8,-29 8,-29 3,-52" fill="#1b1424"/><rect x="-9" y="-31" width="18" height="4" rx="2" fill="#8c1f3a"/>
+    <rect x="-6" y="-29" width="12" height="4" rx="2" fill="#111"/><circle cx="-2.4" cy="-27" r="1.1" fill="#fff"/><circle cx="2.4" cy="-27" r="1.1" fill="#fff"/>
+    ${bags>0 ? `<g transform="translate(9 -2)"><path d="M2 -9 Q5 -15 8 -9" fill="none" stroke="#111" stroke-width="1.2"/><rect width="10" height="11" y="-9" rx="1.5" fill="#fff" stroke="#111" stroke-width="1"/><path d="M0 -6H10M0 -2H10" stroke="#111" stroke-width="1.6"/></g>` : ""}`;
   return `<ellipse cx="0" cy="1" rx="9" ry="2.5" fill="#0003"/>
     <rect x="-5" y="-10" width="3" height="10" fill="${skin}"/><rect x="2" y="-10" width="3" height="10" fill="${skin}"/>
     <rect x="-6" y="-2" width="5" height="3" rx="1.5" fill="#5a3418"/><rect x="1" y="-2" width="5" height="3" rx="1.5" fill="#5a3418"/>
@@ -540,7 +540,7 @@ function sell(i, e){
   }
   renderAll();
 }
-function dismiss(){ if (!customer) return; if (customer.thief) { say("Przejrzałaś złodziejkę! 🕵️ Dobra robota, nic nie zginęło."); sound.pop(); spawnWalker("out",0,true); customer=null; scheduleCustomer(); renderAll(); return; } spawnWalker("out", customer.wants.filter(w=>w.done).length); customer = null; say("Do widzenia, zapraszamy ponownie! 👋"); scheduleCustomer(); renderAll(); }
+function dismiss(){ if (!customer) return; if (customer.thief) { say("Przejrzałaś krasnala-łobuza! 🕵️ Dobra robota, nic nie zginęło."); sound.pop(); spawnWalker("out",0,true); customer=null; scheduleCustomer(); renderAll(); return; } spawnWalker("out", customer.wants.filter(w=>w.done).length); customer = null; say("Do widzenia, zapraszamy ponownie! 👋"); scheduleCustomer(); renderAll(); }
 function unlock(kind, k){
   const data = kind==="types" ? TYPES : kind==="colors" ? COLORS : PATTERNS;
   if (S.coins < data[k].unlock) return;
@@ -557,17 +557,17 @@ function newCustomer(){
   for (let i=0;i<n;i++) wants.push({ type:rnd(S.types), color:rnd(S.colors), done:false });
   const thief = sales>=3 && S.shelf.length>0 && Math.random()<0.15;
   spawnWalker("in", 0, thief);
-  if (thief) say("Ktoś się dziwnie rozgląda… 🥸");
-  const c = customer = { face: thief ? "🥸" : rnd(["👩","👧","👵","👩‍🦰","🧑‍🦱","👱‍♀️"]), wants, total:0, thief };
+  if (thief) say("Ktoś się dziwnie rozgląda… 😈");
+  const c = customer = { face: thief ? "😈" : rnd(["👩","👧","👵","👩‍🦰","🧑‍🦱","👱‍♀️"]), wants, total:0, thief };
   if (thief) setTimeout(()=>steal(c), 9000);
   sound.bell();
   renderCustomer(true);
 }
 function steal(c){
   if (customer!==c || c.wants.every(w=>w.done)) return;
-  if (!S.shelf.length) { say("Podejrzana klientka odeszła z pustymi rękami 😏"); } else {
+  if (!S.shelf.length) { say("Podejrzany krasnal odszedł z pustymi rękami 😏"); } else {
     const i = Math.floor(Math.random()*S.shelf.length), it = S.shelf.splice(i,1)[0];
-    say(`Ojej! To była złodziejka! Ukradła ${TYPES[it.type].acc} 😱 Następnym razem uważaj na 🥸`);
+    say(`Ojej! To był krasnal-łobuz! Ukradł ${TYPES[it.type].acc} 😱 Następnym razem uważaj na 😈`);
     sound.pop();
   }
   spawnWalker("out", 1, true); customer = null; scheduleCustomer(); renderAll();
