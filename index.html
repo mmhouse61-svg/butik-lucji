@@ -85,15 +85,15 @@
   .want.done { background:var(--mint); border-color:#7fcf9f; text-decoration:line-through; opacity:.8; }
   #msg { min-height:1.4em; font-weight:bold; margin-top:10px; color:var(--rose); }
   /* ---------- półka ---------- */
-  .shelf { display:grid; grid-template-columns:repeat(auto-fill,minmax(112px,1fr)); gap:10px; padding-top:6px; position:relative; }
-  .shelf::before { content:""; position:absolute; left:0; right:0; top:14px; height:5px; border-radius:3px;
+  .shelf { display:grid; grid-template-columns:repeat(auto-fill,minmax(112px,1fr)); gap:10px; padding-top:0; position:relative; }
+  .shelf::before { content:""; position:absolute; left:0; right:0; top:2px; height:5px; border-radius:3px;
     background:linear-gradient(180deg,#e9c06a,var(--gold-d)); }
-  .item { position:relative; text-align:center; padding:22px 4px 8px; border-radius:16px; font-size:.82rem; min-height:152px; }
+  .item { position:relative; text-align:center; padding:0 4px 8px; border-radius:16px; font-size:.82rem; min-height:176px; }
   .item.empty { color:#b9a6cf; border:2px dashed #dccbf0; display:grid; place-items:center; }
   .item.click { cursor:pointer; background:radial-gradient(circle at 50% 35%,#fff,#fbeefa); border:2px solid #ecd9f6; }
   .item.click:active { transform:scale(.97); }
   .item .hook { position:absolute; top:-2px; left:50%; width:36px; height:18px; transform:translateX(-50%); }
-  .item svg.cl { width:82px; height:98px; filter:drop-shadow(0 3px 3px #3d1a5c33); }
+  .item svg.cl { display:block; margin:0 auto; width:92px; height:125px; filter:drop-shadow(0 3px 3px #3d1a5c33); }
   .tag { display:inline-block; margin-top:2px; padding:1px 10px; border-radius:10px; background:var(--gold); color:#4a2b00; font-weight:bold; }
   /* ---------- pracownia ---------- */
   .studio { display:flex; flex-wrap:wrap; gap:16px; align-items:flex-start; }
@@ -241,7 +241,7 @@ const PLACES = [
   { id:"wroclavia",name:"Wroclavia",          cost:2000, mult:4.5, every:3000 }
 ];
 // ---------- ekonomia: drożej, czynsz, zdarzenia ----------
-const UNLOCK_X = 3, SLOW_X = 1.6, RENT_EVERY = 60000, RENT_PCT = 0.04, EVENT_EVERY = 70000;
+const UNLOCK_X = 3, SLOW_X = 1.6, RENT_EVERY = 60000, RENT_PCT = 0.02, EVENT_EVERY = 70000;
 [...Object.values(TYPES), ...Object.values(COLORS), ...Object.values(PATTERNS)].forEach(o => { o.unlock = Math.round(o.unlock*UNLOCK_X); });
 PLACES.forEach(p => { p.cost = Math.round(p.cost*UNLOCK_X); p.every = Math.round(p.every*SLOW_X); p.rent = Math.round(p.cost*RENT_PCT); });
 let eventMult = 1, sales = 0;
@@ -431,7 +431,41 @@ function clothSVG(it, uid){
   }
   return patternDefs(it.color, it.text).replace(/id="(p-|sh)/g,`id="${uid}$1`) +
     `<path d="${T.path}" fill="${fill}" stroke="#3b2250" stroke-opacity=".55" stroke-width="1.4" stroke-linejoin="round"/>` +
-    `<path d="${T.path}" fill="url(#${uid}sh)"/>${T.extra||""}${label}`;
+    `<defs><clipPath id="${uid}cp"><path d="${T.path}"/></clipPath>
+      <linearGradient id="${uid}fd" x1="0" y1="0" x2="1" y2="0" spreadMethod="reflect" gradientTransform="scale(.34 1)">
+        <stop offset="0" stop-color="#fff" stop-opacity=".30"/><stop offset=".5" stop-color="#2a0f40" stop-opacity=".16"/><stop offset="1" stop-color="#fff" stop-opacity=".30"/></linearGradient>
+      <radialGradient id="${uid}vg" cx=".5" cy=".4" r=".75"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#2a0f40" stop-opacity=".25"/></radialGradient></defs>` +
+    `<path d="${T.path}" fill="url(#${uid}sh)"/>` +
+    `<g clip-path="url(#${uid}cp)"><path d="${T.path}" fill="url(#${uid}fd)"/><path d="${T.path}" fill="url(#${uid}vg)"/>` +
+      `<path d="${T.path}" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="3" stroke-dasharray="2.5 2.5"/>` +
+      `<path d="${T.path}" fill="none" stroke="#2a0f40" stroke-opacity=".12" stroke-width="7"/></g>` +
+    `${T.extra||""}${label}`;
+}
+// wieszak narysowany razem z ubraniem: ubranie faktycznie na nim wisi
+const GOLD = 'fill="none" stroke="#b9801a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"';
+const HOOK_TOP = '<path d="M50 24 V11 Q50 7 53.5 6 Q58.5 5 58.5 3 Q58.5 .8 55.5 .8" '+GOLD+'/>';
+// top: wieszak z ramionami; clip: poprzeczka z klipsami (spodnie, spódnica); hat: klips na czubku
+const HANG = {
+  sukienka:{k:"top",  e:[34,36]}, bluza:{k:"top", e:[20,45]}, koszula:{k:"top", e:[21,43]},
+  spodnie:{k:"clip", y:24, x:[33,67]}, spodnica:{k:"clip", y:34, x:[34,66]}, szorty:{k:"clip", y:39, x:[33,67]},
+  kapelusz:{k:"hat", y:47}, beret:{k:"hat", y:57}, krawat:{k:"clip", y:24, x:[44,56]}
+};
+function hangerBack(type){
+  const h = HANG[type];
+  if (h.k==="top") { const [ex,ey]=h.e;
+    return `<path d="M50 24 L${ex} ${ey} Q${ex-3} ${ey+1.5} ${ex-2} ${ey+2.5} H${100-ex+2} Q${100-ex+3} ${ey+1.5} ${100-ex} ${ey} Z" ${GOLD} fill="#fff6" />` + HOOK_TOP; }
+  if (h.k==="clip") { const [a,b]=h.x;
+    return `<path d="M${a} ${h.y} H${b}" ${GOLD}/>` + `<path d="M50 ${h.y} V11 Q50 7 53.5 6 Q58.5 5 58.5 3 Q58.5 .8 55.5 .8" ${GOLD}/>`; }
+  return `<path d="M50 ${h.y-2} V11 Q50 7 53.5 6 Q58.5 5 58.5 3 Q58.5 .8 55.5 .8" ${GOLD}/>`;
+}
+function hangerFront(type){
+  const h = HANG[type];
+  if (h.k==="clip") return h.x.map(x=>`<rect x="${x-2.6}" y="${h.y-1}" width="5.2" height="11" rx="1.6" fill="#e9c06a" stroke="#b9801a" stroke-width="1.2"/>`).join("");
+  if (h.k==="hat") return `<rect x="47" y="${h.y-1}" width="6" height="9" rx="1.6" fill="#e9c06a" stroke="#b9801a" stroke-width="1.2"/>`;
+  return "";
+}
+function hungSVG(it, uid){
+  return hangerBack(it.type) + `<g transform="translate(0 15)">${clothSVG(it,uid)}</g>` + hangerFront(it.type);
 }
 function placeMult(){ return PLACES.filter(p=>S.places.includes(p.id)).reduce((a,p)=>Math.max(a,p.mult),1); }
 function price(it){
@@ -457,7 +491,7 @@ function renderShelf(){
   for (let i=0;i<SHELF_SIZE;i++){
     const it = S.shelf[i];
     h += it
-      ? `<div class="item click" onclick="sell(${i},event)">${HOOK}<svg class="cl" viewBox="0 0 100 120">${clothSVG(it,'s'+i)}</svg><div>${TYPES[it.type].name}</div><span class="tag">${fmt(price(it))}</span></div>`
+      ? `<div class="item click" onclick="sell(${i},event)"><svg class="cl" viewBox="0 0 100 135">${hungSVG(it,'s'+i)}</svg><div>${TYPES[it.type].name}</div><span class="tag">${fmt(price(it))}</span></div>`
       : `<div class="item empty">wolne miejsce</div>`;
   }
   $("shelf").innerHTML = h;

@@ -1,5 +1,5 @@
 // Zmień wersję przy każdej aktualizacji gry, żeby iPad pobrał nowe pliki.
-const CACHE = "butik-v8";
+const CACHE = "butik-v10";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
