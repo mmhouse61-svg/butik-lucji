@@ -73,6 +73,10 @@
     <h2>📍 Moje sklepy we Wrocławiu</h2>
     <div id="places"></div>
   </section>
+
+  <section>
+    <button id="reset">🔄 Zacznij grę od nowa</button>
+  </section>
 </main>
 
 <script>
@@ -202,6 +206,17 @@ function scheduleCustomer(reset){
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
 
+function resetGame(){
+  if (!confirm("Na pewno zacząć od nowa? Stracisz wszystkie monety, ubrania i sklepy.")) return;
+  S = { coins:50, shelf:[], places:["rynek"], patterns:["gładki","kropki"] };
+  draft = { type:"sukienka", color:"różowy", pattern:"gładki" };
+  customer = null;
+  say("Nowa gra! Powodzenia w butiku 🎀");
+  scheduleCustomer(true);
+  renderAll();
+}
+
+$("reset").onclick = resetGame;
 $("make").onclick = make;
 renderAll();
 scheduleCustomer();
