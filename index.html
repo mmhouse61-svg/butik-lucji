@@ -515,7 +515,17 @@ function patternDefs(c, text){
 // ---------- ubrania rastrowe (bajkowe ilustracje, kolor/wzór nakładane w locie) ----------
 // Źródło: szary rysunek na białym tle. Z niego powstają: maska sylwetki i warstwa cieni (mnożona przez kolor/wzór).
 const RASTER = {};                       // typ -> { shade, mask, w, h }
-const RASTER_SRC = { sukienka:{ src:"assets/sukienka.png", x:8, y:16, w:84 } };   // x,y,w w układzie 100×120
+const RASTER_SRC = {
+  sukienka:{ src:"assets/sukienka.png", x:8,  y:16, w:84 },
+  spodnie: { src:"assets/spodnie.png",  x:22, y:14, w:56 },
+  bluza:   { src:"assets/bluza.png",    x:10, y:17, w:80 },
+  krawat:  { src:"assets/krawat.png",   x:36, y:14, w:28 },
+  kapelusz:{ src:"assets/kapelusz.png", x:5,  y:32, w:90 },
+  szorty:  { src:"assets/szorty.png",   x:17, y:24, w:66 },
+  beret:   { src:"assets/beret.png",    x:15, y:38, w:70 },
+  koszula: { src:"assets/koszula.png",  x:10, y:17, w:80 },
+  spodnica:{ src:"assets/spodnica.png", x:12, y:19, w:76 }
+};   // x,y,w w układzie 100×120
 function loadRaster(type){
   const cfg = RASTER_SRC[type], im = new Image();
   im.onload = () => {
@@ -533,12 +543,16 @@ function loadRaster(type){
     let x0=W,y0=H,x1=0,y1=0;
     for (let i=0;i<W*H;i++) if (!bg[i]) { const x=i%W, y=(i/W)|0; if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
     const w = x1-x0+1, h = y1-y0+1;
+    const hist = new Uint32Array(256); let n = 0;
+    for (let i=0;i<W*H;i++) if (!bg[i]) { hist[Math.round(lum(i))]++; n++; }
+    let hi = 255, acc = 0; for (let v=255; v>=0; v--) { acc += hist[v]; if (acc > n*0.12) { hi = v; break; } }
+    hi = Math.max(hi, 120);
     const mk = () => { const k = document.createElement("canvas"); k.width = w; k.height = h; const kg = k.getContext("2d"); return [k,kg,kg.createImageData(w,h)]; };
     const [sc,sg,sd] = mk(), [mc,mg,md] = mk();
     for (let y=0;y<h;y++) for (let x=0;x<w;x++) {
       const si = (y+y0)*W + x+x0, o = (y*w+x)*4;
       if (bg[si]) continue;
-      const l = Math.min(1, Math.max(0, (lum(si)-70)/168)), k = 255*(0.25+0.75*l);
+      const l = Math.min(1, Math.max(0, (lum(si)-70)/(hi-70))), k = 255*(0.25+0.75*l);
       sd.data[o]=sd.data[o+1]=sd.data[o+2]=k; sd.data[o+3]=255;
       md.data[o]=md.data[o+1]=md.data[o+2]=255; md.data[o+3]=255;
     }

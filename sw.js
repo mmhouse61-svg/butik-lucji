@@ -1,6 +1,6 @@
 // Zmień wersję przy każdej aktualizacji gry, żeby iPad pobrał nowe pliki.
-const CACHE = "butik-v17";
-const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png", "./assets/sukienka.png"];
+const CACHE = "butik-v18";
+const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png", "./assets/sukienka.png", "./assets/spodnie.png", "./assets/bluza.png", "./assets/krawat.png", "./assets/kapelusz.png", "./assets/szorty.png", "./assets/beret.png", "./assets/koszula.png", "./assets/spodnica.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
