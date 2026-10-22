@@ -240,6 +240,11 @@ const PLACES = [
   { id:"dominik", name:"Galeria Dominikańska",cost:1200, mult:3.5, every:3500 },
   { id:"wroclavia",name:"Wroclavia",          cost:2000, mult:4.5, every:3000 }
 ];
+// ---------- ekonomia: drożej, czynsz, zdarzenia ----------
+const UNLOCK_X = 3, SLOW_X = 1.6, RENT_EVERY = 60000, RENT_PCT = 0.04, EVENT_EVERY = 70000;
+[...Object.values(TYPES), ...Object.values(COLORS), ...Object.values(PATTERNS)].forEach(o => { o.unlock = Math.round(o.unlock*UNLOCK_X); });
+PLACES.forEach(p => { p.cost = Math.round(p.cost*UNLOCK_X); p.every = Math.round(p.every*SLOW_X); p.rent = Math.round(p.cost*RENT_PCT); });
+let eventMult = 1, sales = 0;
 const SHELF_SIZE = 6, MAKE_COST = 10, ORDER_BONUS = 0.15, DEFAULT_TEXT = "Łucja";
 
 const fresh = () => ({ coins:50, shelf:[], places:["rynek"],
@@ -313,17 +318,80 @@ function buildHero(){
     <path d="M292 150 V122 Q300 112 308 122 V150 Z" fill="#7a4a2a"/></g>`;
   // bruk
   h += `<rect x="0" y="140" width="600" height="10" fill="#8c6bb0" opacity=".55"/>`;
-  // krasnal
-  h += `<g transform="translate(520 92)">
-    <ellipse cx="22" cy="56" rx="18" ry="4" fill="#0003"/>
+  // krasnal i klientki chodzą po bruku (ruch w animateHero)
+  h += `<g id="walkers"></g><g id="gnome"></g>`;
+  $("hero").innerHTML = h;
+  $("gnome").innerHTML = GNOME_SVG;
+}
+
+// ---------- ruch: krasnal spaceruje, klientki wchodzą do butiku i wychodzą z torbami ----------
+const GNOME_SVG = `<ellipse cx="22" cy="56" rx="18" ry="4" fill="#0003"/>
     <rect x="12" y="34" width="20" height="20" rx="6" fill="#3b82c4"/><rect x="12" y="44" width="20" height="4" fill="#f2b84b"/>
     <rect x="12" y="52" width="7" height="5" rx="2" fill="#5a3418"/><rect x="25" y="52" width="7" height="5" rx="2" fill="#5a3418"/>
     <circle cx="22" cy="26" r="11" fill="#ffd6b3"/>
     <path d="M10 28 Q22 56 34 28 Q22 36 10 28 Z" fill="#fff"/>
     <polygon points="9,22 35,22 24,-14" fill="#d6372f"/><rect x="8" y="19" width="28" height="6" rx="3" fill="#b32a24"/>
     <circle cx="18" cy="24" r="1.4" fill="#3b2250"/><circle cx="26" cy="24" r="1.4" fill="#3b2250"/><circle cx="22" cy="28" r="2" fill="#f0a08a"/>
-    <path d="M30 40 L40 32" stroke="#ffd6b3" stroke-width="4" stroke-linecap="round"/></g>`;
-  $("hero").innerHTML = h;
+    <path d="M30 40 L40 32" stroke="#ffd6b3" stroke-width="4" stroke-linecap="round"/>`;
+const DOOR_X = 300, GROUND = 143;
+const walkers = [];
+const gnome = { x: 540, dir: -1, pause: 0, phase: 0 };
+const REDUCED = matchMedia("(prefers-reduced-motion:reduce)").matches;
+function figureSVG(bags){
+  const dress = rnd(["#e85d9a","#7b5cd6","#2fa88a","#f0a030","#4a86d8","#d94f4f"]);
+  const hair = rnd(["#5a3418","#2b1b12","#d9a441","#a8502a"]);
+  const skin = rnd(["#ffd6b3","#f2c19a","#d9a074"]);
+  const bagCol = rnd(["#ff7aa8","#ffd45e","#7fd1b9","#9db7ff"]);
+  const bag = n => `<g transform="translate(${n?-13:11} ${n?-4:-2})"><path d="M2 -9 Q5 -15 8 -9" fill="none" stroke="#6b4a2a" stroke-width="1.2"/><rect width="10" height="11" y="-9" rx="1.5" fill="${bagCol}" stroke="#fff" stroke-width="1"/><path d="M5 -5 l1 2 -1 2 -1 -2z" fill="#fff"/></g>`;
+  return `<ellipse cx="0" cy="1" rx="9" ry="2.5" fill="#0003"/>
+    <rect x="-5" y="-10" width="3" height="10" fill="${skin}"/><rect x="2" y="-10" width="3" height="10" fill="${skin}"/>
+    <rect x="-6" y="-2" width="5" height="3" rx="1.5" fill="#5a3418"/><rect x="1" y="-2" width="5" height="3" rx="1.5" fill="#5a3418"/>
+    <circle cx="0" cy="-36" r="8" fill="${hair}"/><circle cx="8" cy="-30" r="3.5" fill="${hair}"/>
+    <polygon points="-10,-9 -4,-28 4,-28 10,-9" fill="${dress}"/>
+    <circle cx="0" cy="-34" r="6.5" fill="${skin}"/><path d="M-7 -37 Q0 -45 7 -37 Q0 -40 -7 -37Z" fill="${hair}"/>
+    <circle cx="-2.2" cy="-34" r=".9" fill="#3b2250"/><circle cx="2.2" cy="-34" r=".9" fill="#3b2250"/>
+    ${bags>0 ? bag(0) : ""}${bags>1 ? bag(1) : ""}`;
+}
+// kind: "in" (idzie do drzwi i znika) albo "out" (wychodzi z drzwi, niesie torby)
+function spawnWalker(kind, bags){
+  if (REDUCED) return;
+  const g = document.createElementNS("http://www.w3.org/2000/svg","g");
+  g.innerHTML = figureSVG(kind==="out" ? Math.min(2, bags) : 0);
+  $("walkers").appendChild(g);
+  const side = Math.random()<.5 ? -1 : 1, edge = DOOR_X + side*(210+Math.random()*60);
+  const w = { g, kind, phase: Math.random()*6, dy: Math.random()*3,
+    x: kind==="in" ? edge : DOOR_X, to: kind==="in" ? DOOR_X : edge, speed: 50+Math.random()*14 };
+  walkers.push(w);
+}
+function animateHero(){
+  if (REDUCED) { $("gnome").setAttribute("transform","translate(498 86)"); return; }
+  let last = performance.now();
+  (function tick(t){
+    const dt = Math.min(.05,(t-last)/1000); last = t;
+    // krasnal
+    if (gnome.pause>0) gnome.pause -= dt;
+    else {
+      gnome.x += gnome.dir*24*dt; gnome.phase += dt*9;
+      if (gnome.x<40) { gnome.x=40; gnome.dir=1; gnome.pause=.8; }
+      if (gnome.x>570) { gnome.x=570; gnome.dir=-1; gnome.pause=.8; }
+      if (Math.random()<.004) gnome.pause = 1+Math.random()*2;
+    }
+    const bob = gnome.pause>0 ? 0 : -Math.abs(Math.sin(gnome.phase))*2.5;
+    $("gnome").setAttribute("transform",`translate(${gnome.x.toFixed(1)} ${86+bob}) scale(${gnome.dir} 1) translate(-22 0)`);
+    // klientki
+    for (let i=walkers.length-1;i>=0;i--){
+      const w = walkers[i], dir = Math.sign(w.to-w.x)||1;
+      w.x += dir*w.speed*dt; w.phase += dt*10;
+      const done = dir>0 ? w.x>=w.to : w.x<=w.to;
+      const dd = Math.abs(w.x-DOOR_X);
+      const op = dd<14 ? dd/14 : 1;
+      const bob = -Math.abs(Math.sin(w.phase))*2;
+      w.g.setAttribute("opacity", op.toFixed(2));
+      w.g.setAttribute("transform",`translate(${w.x.toFixed(1)} ${(GROUND+w.dy+bob).toFixed(1)}) scale(${dir} 1)`);
+      if (done) { w.g.remove(); walkers.splice(i,1); }
+    }
+    requestAnimationFrame(tick);
+  })(last);
 }
 
 // ---------- rysowanie ubrań ----------
@@ -359,7 +427,7 @@ function clothSVG(it, uid){
 }
 function placeMult(){ return PLACES.filter(p=>S.places.includes(p.id)).reduce((a,p)=>Math.max(a,p.mult),1); }
 function price(it){
-  return Math.round((TYPES[it.type].price + PATTERNS[it.pattern].bonus + (COLORS[it.color].bonus||0)) * placeMult());
+  return Math.round((TYPES[it.type].price + PATTERNS[it.pattern].bonus + (COLORS[it.color].bonus||0)) * placeMult() * eventMult);
 }
 const fmt = n => n+" zł";
 const wantText = w => COLORS[w.color][TYPES[w.type].g] + " " + TYPES[w.type].acc;
@@ -402,7 +470,7 @@ function renderShop(){
 function renderPlaces(){
   $("places").innerHTML = PLACES.map(p=>{
     const own = S.places.includes(p.id);
-    return `<div class="place ${own?'':'locked'}"><span>${own?'✦':'🔒'} <b>${p.name}</b><br><small>ceny ×${p.mult} · klientka co ${p.every/1000} s</small></span>` +
+    return `<div class="place ${own?'':'locked'}"><span>${own?'✦':'🔒'} <b>${p.name}</b><br><small>ceny ×${p.mult} · klientka co ${(p.every/1000).toFixed(0)} s${p.rent?` · czynsz ${p.rent} zł/min`:' · bez czynszu'}</small></span>` +
       (own ? "" : `<button class="shopbtn" ${S.coins<p.cost?'disabled':''} onclick="buyPlace('${p.id}')">Otwórz · ${fmt(p.cost)}</button>`) + `</div>`;
   }).join("");
 }
@@ -450,12 +518,13 @@ function sell(i, e){
   const txt = bestMult===2 ? "Dokładnie takie chciałam! 😍 Podwójna cena!" : bestMult===1.5 ? "Prawie jak chciałam, bardzo ładne! 💕" : "Dziękuję, jakoś się przyda!";
   const gain = Math.round(price(it)*bestMult);
   best.done = true; customer.total += gain;
-  S.coins += gain; S.shelf.splice(i,1);
+  S.coins += gain; S.shelf.splice(i,1); sales++;
   sound.coin(); fx(e, "+"+fmt(gain));
   if (customer.wants.every(w=>w.done)) {
     const bonus = customer.wants.length>1 ? Math.round(customer.total*ORDER_BONUS) : 0;
     S.coins += bonus;
     say(`${txt} +${fmt(gain)}` + (bonus ? ` · Cały komplet! Bonus +${fmt(bonus)} 🎁` : ""));
+    spawnWalker("out", customer.wants.length);
     customer = null;
     scheduleCustomer();
   } else {
@@ -463,7 +532,7 @@ function sell(i, e){
   }
   renderAll();
 }
-function dismiss(){ if (!customer) return; customer = null; say("Do widzenia, zapraszamy ponownie! 👋"); scheduleCustomer(); renderAll(); }
+function dismiss(){ if (!customer) return; if (customer.thief) { say("Przejrzałaś złodziejkę! 🕵️ Dobra robota, nic nie zginęło."); sound.pop(); spawnWalker("out",0); customer=null; scheduleCustomer(); renderAll(); return; } spawnWalker("out", customer.wants.filter(w=>w.done).length); customer = null; say("Do widzenia, zapraszamy ponownie! 👋"); scheduleCustomer(); renderAll(); }
 function unlock(kind, k){
   const data = kind==="types" ? TYPES : kind==="colors" ? COLORS : PATTERNS;
   if (S.coins < data[k].unlock) return;
@@ -478,10 +547,38 @@ function newCustomer(){
   const n = 1 + Math.floor(Math.random()*maxItems);
   const wants = [];
   for (let i=0;i<n;i++) wants.push({ type:rnd(S.types), color:rnd(S.colors), done:false });
-  customer = { face:rnd(["👩","👧","👵","👩‍🦰","🧑‍🦱","👱‍♀️"]), wants, total:0 };
+  spawnWalker("in", 0);
+  const thief = sales>=3 && S.shelf.length>0 && Math.random()<0.15;
+  const c = customer = { face: thief ? "🥸" : rnd(["👩","👧","👵","👩‍🦰","🧑‍🦱","👱‍♀️"]), wants, total:0, thief };
+  if (thief) setTimeout(()=>steal(c), 9000);
   sound.bell();
   renderCustomer(true);
 }
+function steal(c){
+  if (customer!==c || c.wants.every(w=>w.done)) return;
+  if (!S.shelf.length) { say("Podejrzana klientka odeszła z pustymi rękami 😏"); } else {
+    const i = Math.floor(Math.random()*S.shelf.length), it = S.shelf.splice(i,1)[0];
+    say(`Ojej! To była złodziejka! Ukradła ${TYPES[it.type].acc} 😱 Następnym razem uważaj na 🥸`);
+    sound.pop();
+  }
+  spawnWalker("out", 1); customer = null; scheduleCustomer(); renderAll();
+}
+function payRent(){
+  const due = PLACES.filter(p=>S.places.includes(p.id)).reduce((a,p)=>a+p.rent,0);
+  if (!due) return;
+  const pay = Math.min(due, S.coins); S.coins -= pay;
+  say(pay<due ? `Czynsz ${due} zł, zapłaciłaś ile miałaś (${pay} zł). Właściciel poczeka 🙂` : `Czynsz za sklepy: −${due} zł 🏠`);
+  renderAll();
+}
+const EVENTS = [
+  () => { eventMult = 1.5; say("🎪 Festyn na Rynku! Ceny ×1,5 przez 30 sekund!"); setTimeout(()=>{ eventMult=1; renderAll(); }, 30000); renderAll(); },
+  () => { const x = Math.min(S.coins, 15+Math.floor(Math.random()*30)); S.coins -= x; say(`🔧 Pękła rura w pracowni! Naprawa −${x} zł`); renderAll(); },
+  () => { const x = 20+Math.floor(Math.random()*40); S.coins += x; say(`🎁 Krasnal znalazł skarb pod Rynkiem! +${x} zł`); sound.coin(); renderAll(); },
+  () => { const x = Math.min(S.coins, 10+Math.floor(Math.random()*20)); S.coins -= x; say(`📋 Kontrola sanepidu, mandat −${x} zł`); renderAll(); },
+  () => { const x = 15+Math.floor(Math.random()*25); S.coins += x; say(`💌 Wielbicielka zostawiła napiwek! +${x} zł`); sound.coin(); renderAll(); }
+];
+setInterval(payRent, RENT_EVERY);
+setInterval(()=>{ if (sales>=2) rnd(EVENTS)(); }, EVENT_EVERY);
 function interval(){ return Math.min(...PLACES.filter(p=>S.places.includes(p.id)).map(p=>p.every)); }
 function scheduleCustomer(){
   clearTimeout(timer);
@@ -515,11 +612,11 @@ $("txt").oninput = e => {   // bez pełnego renderu, żeby klawiatura nie znika�
   draft.text = S.text = e.target.value; save();
   $("preview").innerHTML = clothSVG(draft,"pv");
 };
-buildHero();
+buildHero(); animateHero();
 renderAll();
 scheduleCustomer();
 // pierwsza klientka szybko, żeby nie czekać
-setTimeout(()=>{ if(!customer){ customer={face:"👩",wants:[{type:"sukienka",color:"różowy",done:false}],total:0}; sound.bell(); renderCustomer(true); } }, 1500);
+setTimeout(()=>{ if(!customer){ spawnWalker("in",0); customer={face:"👩",wants:[{type:"sukienka",color:"różowy",done:false}],total:0}; sound.bell(); renderCustomer(true); } }, 1500);
 </script>
 </body>
 </html>
