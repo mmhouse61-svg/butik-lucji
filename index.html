@@ -14,13 +14,16 @@
 <style>
   :root { --bg:#fff4f8; --card:#fff; --pink:#f48fb1; --dark:#6a1b4d; --gold:#ffc107; }
   * { box-sizing:border-box; }
-  body { margin:0; padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); -webkit-user-select:none; user-select:none; font-family:"Trebuchet MS",sans-serif; background:var(--bg); color:var(--dark); }
-  header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--pink); color:#fff; }
+  body { margin:0; padding:0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); -webkit-user-select:none; user-select:none; font-family:"Trebuchet MS",sans-serif; background:var(--bg); color:var(--dark); }
+  header { position:sticky; top:0; z-index:10; display:flex; justify-content:space-between; align-items:center; gap:8px; padding:calc(10px + env(safe-area-inset-top)) 16px 10px; background:var(--pink); color:#fff; box-shadow:0 2px 8px #0003; }
   header h1 { margin:0; font-size:1.3rem; }
+  .right { display:flex; align-items:center; gap:8px; }
   #coins { font-size:1.3rem; font-weight:bold; background:#fff; color:var(--dark); padding:4px 14px; border-radius:20px; }
+  #mute { padding:4px 10px; font-size:1.2rem; border-radius:20px; }
   main { max-width:900px; margin:0 auto; padding:12px; display:grid; gap:12px; }
   section { background:var(--card); border-radius:16px; padding:14px; box-shadow:0 2px 8px #0001; }
   h2 { margin:0 0 10px; font-size:1.1rem; }
+  h3 { margin:10px 0 6px; font-size:.95rem; }
   .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
   button { touch-action:manipulation; font:inherit; border:2px solid var(--pink); background:#fff; color:var(--dark); border-radius:12px; padding:8px 12px; cursor:pointer; }
   button.sel { background:var(--pink); color:#fff; }
@@ -28,27 +31,35 @@
   button:disabled { opacity:.4; cursor:not-allowed; }
   .sw { width:34px; height:34px; border-radius:50%; padding:0; border:3px solid #fff; box-shadow:0 0 0 2px #ccc; }
   .sw.sel { box-shadow:0 0 0 3px var(--dark); }
+  .sw.glit { background:radial-gradient(circle at 30% 30%,#fff 0 8%,transparent 9%),radial-gradient(circle at 70% 60%,#ffe082 0 8%,transparent 9%),#ec6fd1; }
   #preview { width:160px; height:190px; background:#fce4ec; border-radius:12px; }
   .shelf { display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:8px; }
-  .item { text-align:center; border:2px dashed #e0b; border-radius:12px; padding:6px; background:#fff8fb; min-height:130px; }
+  .item { text-align:center; border:2px dashed #e0b; border-radius:12px; padding:6px; background:#fff8fb; min-height:140px; font-size:.85rem; }
   .item.click { cursor:pointer; border-style:solid; }
   .item.click:hover { background:#ffe3ef; }
   .item svg { width:80px; height:95px; }
   .customer { font-size:1.05rem; min-height:60px; display:flex; align-items:center; gap:12px; }
   .customer .face { font-size:2.4rem; }
-  #msg { min-height:1.4em; font-weight:bold; }
-  .place { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #f3d; }
+  .wants { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .want { background:#ffe3ef; border-radius:14px; padding:3px 10px; font-size:.95rem; }
+  .want.done { background:#d7f5dd; text-decoration:line-through; }
+  #msg { min-height:1.4em; font-weight:bold; margin-top:6px; }
+  .place { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #f3d; }
   .place:last-child { border:none; }
   .locked { opacity:.55; }
 </style>
 </head>
 <body>
-<header><h1>👗 Butik Łucji</h1><div id="coins">0 🪙</div></header>
+<header>
+  <h1>👗 Butik Łucji</h1>
+  <div class="right"><button id="mute" title="Dźwięk">🔔</button><div id="coins">0 zł</div></div>
+</header>
 <main>
   <section>
     <h2>🛎️ Klientka</h2>
     <div class="customer" id="customer">Czekam na klientkę…</div>
     <div id="msg"></div>
+    <div class="row" style="margin-top:6px"><button id="bye" hidden>👋 Pożegnaj klientkę</button></div>
   </section>
 
   <section>
@@ -64,9 +75,14 @@
         <div class="row" id="types"></div><br>
         <div class="row" id="colors"></div><br>
         <div class="row" id="patterns"></div><br>
-        <button class="main" id="make">✂️ Uszyj (<span id="cost">10</span> 🪙)</button>
+        <button class="main" id="make">✂️ Uszyj (<span id="cost">10</span> zł)</button>
       </div>
     </div>
+  </section>
+
+  <section>
+    <h2>🛍️ Hurtownia – odblokuj nowości</h2>
+    <div id="shop"></div>
   </section>
 
   <section>
@@ -80,63 +96,123 @@
 </main>
 
 <script>
+// g = rodzaj: f (ona), m (on), p (liczba mnoga); acc = biernik ("szukam ...")
 const TYPES = {
-  sukienka:{ name:"Sukienka", price:20, path:"M35 15 L45 15 Q50 25 55 15 L65 15 L68 45 L82 105 L18 105 L32 45 Z" },
-  spodnie: { name:"Spodnie",  price:15, path:"M30 15 L70 15 L72 45 L66 108 L53 108 L50 55 L47 108 L34 108 L28 45 Z" },
-  bluza:   { name:"Bluza",    price:18, path:"M35 15 Q50 28 65 15 L88 40 L78 55 L70 48 L70 100 L30 100 L30 48 L22 55 L12 40 Z" },
-  spodnica:{ name:"Spódnica", price:12, path:"M32 25 L68 25 L72 40 L88 105 L12 105 L28 40 Z" }
+  sukienka:{ name:"Sukienka", acc:"sukienkę", g:"f", price:20, unlock:0,   path:"M35 15 L45 15 Q50 25 55 15 L65 15 L68 45 L82 105 L18 105 L32 45 Z" },
+  spodnie: { name:"Spodnie",  acc:"spodnie",  g:"p", price:15, unlock:0,   path:"M30 15 L70 15 L72 45 L66 108 L53 108 L50 55 L47 108 L34 108 L28 45 Z" },
+  bluza:   { name:"Bluza",    acc:"bluzę",    g:"f", price:18, unlock:0,   path:"M35 15 Q50 28 65 15 L88 40 L78 55 L70 48 L70 100 L30 100 L30 48 L22 55 L12 40 Z" },
+  spodnica:{ name:"Spódnica", acc:"spódnicę", g:"f", price:12, unlock:0,   path:"M32 25 L68 25 L72 40 L88 105 L12 105 L28 40 Z" },
+  kapelusz:{ name:"Kapelusz", acc:"kapelusz", g:"m", price:14, unlock:80,  path:"M34 70 L36 40 Q50 28 64 40 L66 70 Q92 72 90 80 Q50 96 10 80 Q8 72 34 70 Z" },
+  szorty:  { name:"Krótkie spodenki", acc:"krótkie spodenki", g:"p", price:14, unlock:120, path:"M28 30 L72 30 L75 70 L54 70 L50 52 L46 70 L25 70 Z" },
+  beret:   { name:"Beret",    acc:"beret",    g:"m", price:14, unlock:100, path:"M18 72 Q12 45 50 40 Q88 45 82 72 Q50 84 18 72 Z M48 40 L48 30 L52 30 L52 40 Z" },
+  krawat:  { name:"Krawat",   acc:"krawat",   g:"m", price:10, unlock:150, path:"M42 15 L58 15 L55 30 L62 90 L50 105 L38 90 L45 30 Z" },
+  koszula: { name:"Koszula",  acc:"koszulę",  g:"f", price:22, unlock:200, path:"M33 18 L44 14 L50 30 L56 14 L67 18 L86 34 L76 48 L70 42 L70 100 L30 100 L30 42 L24 48 L14 34 Z",
+             extra:'<path d="M50 30 V100" stroke="#0005" stroke-width="1.5"/><circle cx="50" cy="45" r="1.8" fill="#0006"/><circle cx="50" cy="60" r="1.8" fill="#0006"/><circle cx="50" cy="75" r="1.8" fill="#0006"/>' }
 };
-const COLORS = { czerwony:"#e53935", niebieski:"#1e88e5", zielony:"#43a047", żółty:"#fdd835", różowy:"#f06292", fioletowy:"#8e24aa" };
+// formy: m (on), f (ona, biernik), p (liczba mnoga); ink = kolor wzoru
+const COLORS = {
+  czerwony: { m:"czerwony", f:"czerwoną", p:"czerwone", hex:"#e53935", unlock:0 },
+  niebieski:{ m:"niebieski",f:"niebieską",p:"niebieskie",hex:"#1e88e5",unlock:0 },
+  zielony:  { m:"zielony",  f:"zieloną",  p:"zielone",  hex:"#43a047", unlock:0 },
+  żółty:    { m:"żółty",    f:"żółtą",    p:"żółte",    hex:"#fdd835", unlock:0, ink:"#6a1b4d" },
+  różowy:   { m:"różowy",   f:"różową",   p:"różowe",   hex:"#f06292", unlock:0 },
+  fioletowy:{ m:"fioletowy",f:"fioletową",p:"fioletowe",hex:"#8e24aa", unlock:0 },
+  turkusowy:{ m:"turkusowy",f:"turkusową",p:"turkusowe",hex:"#00bfa5", unlock:50 },
+  bordowy:  { m:"bordowy",  f:"bordową",  p:"bordowe",  hex:"#7b1230", unlock:70 },
+  biały:    { m:"biały",    f:"białą",    p:"białe",    hex:"#ffffff", unlock:90,  ink:"#6a1b4d" },
+  czarny:   { m:"czarny",   f:"czarną",   p:"czarne",   hex:"#212121", unlock:110 },
+  brokatowy:{ m:"brokatowy",f:"brokatową",p:"brokatowe",hex:"#ec6fd1", unlock:250, bonus:10, glitter:true }
+};
 const PATTERNS = {
-  gładki:  { name:"Gładki",  bonus:0,  unlock:0 },
-  kropki:  { name:"Kropki",  bonus:5,  unlock:0 },
-  paski:   { name:"Paski",   bonus:6,  unlock:60 },
-  kratka:  { name:"Kratka",  bonus:8,  unlock:120 },
-  gwiazdki:{ name:"Gwiazdki",bonus:10, unlock:200 }
+  gładki:   { name:"Gładki",    bonus:0,  unlock:0 },
+  kropki:   { name:"Kropki",    bonus:5,  unlock:0 },
+  paski:    { name:"Paski",     bonus:6,  unlock:60 },
+  serduszka:{ name:"Serduszka", bonus:8,  unlock:90 },
+  kratka:   { name:"Kratka",    bonus:8,  unlock:120 },
+  kwiatki:  { name:"Kwiatki",   bonus:10, unlock:140 },
+  napis:    { name:"Napis",     bonus:12, unlock:160 },
+  gwiazdki: { name:"Gwiazdki",  bonus:10, unlock:200 }
 };
 const PLACES = [
-  { id:"rynek",   name:"Rynek",           cost:0,   mult:1,   every:7000 },
-  { id:"hala",    name:"Hala Targowa",    cost:100, mult:1.3, every:6000 },
-  { id:"wyspa",   name:"Wyspa Słodowa",   cost:250, mult:1.7, every:5000 },
-  { id:"ostrow",  name:"Ostrów Tumski",   cost:500, mult:2.2, every:4000 }
+  { id:"rynek",   name:"Rynek",               cost:0,    mult:1,   every:7000 },
+  { id:"hala",    name:"Hala Targowa",        cost:100,  mult:1.3, every:6000 },
+  { id:"wyspa",   name:"Wyspa Słodowa",       cost:250,  mult:1.7, every:5000 },
+  { id:"ostrow",  name:"Ostrów Tumski",       cost:500,  mult:2.2, every:4500 },
+  { id:"renoma",  name:"Renoma",              cost:800,  mult:2.8, every:4000 },
+  { id:"dominik", name:"Galeria Dominikańska",cost:1200, mult:3.5, every:3500 },
+  { id:"wroclavia",name:"Wroclavia",          cost:2000, mult:4.5, every:3000 }
 ];
-const SHELF_SIZE = 6, MAKE_COST = 10;
+const SHELF_SIZE = 6, MAKE_COST = 10, ORDER_BONUS = 0.15;
 
-let S = load() || { coins:50, shelf:[], places:["rynek"], patterns:["gładki","kropki"] };
+const fresh = () => ({ coins:50, shelf:[], places:["rynek"],
+  types:Object.keys(TYPES).filter(k=>!TYPES[k].unlock),
+  colors:Object.keys(COLORS).filter(k=>!COLORS[k].unlock),
+  patterns:["gładki","kropki"] });
+let S = { ...fresh(), ...(load() || {}) };
 let draft = { type:"sukienka", color:"różowy", pattern:"gładki" };
 let customer = null, timer = null;
+let muted = false; try { muted = localStorage.getItem("butik-mute")==="1"; } catch(e){}
 
 function load(){ try { return JSON.parse(localStorage.getItem("butik")); } catch(e){ return null; } }
 function save(){ try { localStorage.setItem("butik", JSON.stringify(S)); } catch(e){} }
 const $ = id => document.getElementById(id);
 const rnd = a => a[Math.floor(Math.random()*a.length)];
 
-function patternDefs(color){
+// ---------- dźwięk (WebAudio, bez plików) ----------
+let AC = null;
+function audio(){
+  if (!AC) { const C = window.AudioContext || window.webkitAudioContext; if (C) AC = new C(); }
+  if (AC && AC.state==="suspended") AC.resume();
+  return AC;
+}
+function tone(freq, start, dur, vol, type){
+  if (muted) return; const ac = audio(); if (!ac || ac.state!=="running") return;
+  const t = ac.currentTime + start, o = ac.createOscillator(), g = ac.createGain();
+  o.type = type || "sine"; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+  o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t+dur+0.05);
+}
+const sound = {
+  bell(){ tone(1318,0,1.1,.25); tone(2637,0,.6,.08); tone(988,.45,1.3,.25); tone(1976,.45,.7,.08); }, // ding-dong dzwonka
+  coin(){ tone(1568,0,.12,.2,"square"); tone(2093,.1,.35,.2,"square"); },
+  pop(){ tone(520,0,.1,.2); tone(780,.07,.12,.15); },
+  unlock(){ [523,659,784,1047].forEach((f,i)=>tone(f,i*.1,.3,.2)); }
+};
+document.addEventListener("pointerdown", audio, { passive:true });
+
+// ---------- rysowanie ubrań ----------
+function patternDefs(c){
+  const col = COLORS[c], hex = col.hex, ink = col.ink || "#fff";
+  const txt = (id,w,h,s,t) => `<pattern id="p-${id}" width="${w}" height="${h}" patternUnits="userSpaceOnUse"><rect width="${w}" height="${h}" fill="${hex}"/><text x="${w/2}" y="${h*0.75}" font-size="${s}" font-weight="bold" text-anchor="middle" fill="${ink}">${t}</text></pattern>`;
   return `<defs>
-    <pattern id="p-kropki" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="${color}"/><circle cx="6" cy="6" r="2.5" fill="#fff"/></pattern>
-    <pattern id="p-paski" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="${color}"/><rect width="12" height="5" fill="#fff"/></pattern>
-    <pattern id="p-kratka" width="14" height="14" patternUnits="userSpaceOnUse"><rect width="14" height="14" fill="${color}"/><path d="M0 7H14M7 0V14" stroke="#fff" stroke-width="2"/></pattern>
-    <pattern id="p-gwiazdki" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="16" fill="${color}"/><text x="8" y="12" font-size="11" text-anchor="middle" fill="#fff">★</text></pattern>
+    <pattern id="p-kropki" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="${hex}"/><circle cx="6" cy="6" r="2.5" fill="${ink}"/></pattern>
+    <pattern id="p-paski" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="${hex}"/><rect width="12" height="5" fill="${ink}"/></pattern>
+    <pattern id="p-kratka" width="14" height="14" patternUnits="userSpaceOnUse"><rect width="14" height="14" fill="${hex}"/><path d="M0 7H14M7 0V14" stroke="${ink}" stroke-width="2"/></pattern>
+    ${txt("gwiazdki",16,16,11,"★")}${txt("serduszka",16,16,11,"♥")}${txt("kwiatki",16,16,12,"✿")}${txt("napis",36,16,9,"Łucja")}
+    <pattern id="p-glit" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="${hex}"/>
+      <circle cx="2" cy="3" r=".9" fill="#ffe082"/><circle cx="7" cy="2" r=".7" fill="#fff"/><circle cx="5" cy="7" r="1" fill="#ffe082"/><circle cx="9" cy="8" r=".7" fill="#fff"/><circle cx="1" cy="8" r=".6" fill="#fff"/></pattern>
   </defs>`;
 }
 function clothSVG(it, uid){
-  const c = COLORS[it.color];
-  const fill = it.pattern==="gładki" ? c : `url(#p-${it.pattern})`;
-  return patternDefs(c).replace(/id="p-/g,`id="${uid}p-`) +
-    `<path d="${TYPES[it.type].path}" fill="${fill.replace('url(#','url(#'+uid)}" stroke="#0004" stroke-width="1.5"/>`;
+  const col = COLORS[it.color];
+  const p = it.pattern!=="gładki" ? it.pattern : (col.glitter ? "glit" : null);
+  const fill = p ? `url(#${uid}p-${p})` : col.hex;
+  return patternDefs(it.color).replace(/id="p-/g,`id="${uid}p-`) +
+    `<path d="${TYPES[it.type].path}" fill="${fill}" stroke="#0004" stroke-width="1.5"/>${TYPES[it.type].extra||""}`;
 }
+function placeMult(){ return PLACES.filter(p=>S.places.includes(p.id)).reduce((a,p)=>Math.max(a,p.mult),1); }
 function price(it){
-  const m = PLACES.filter(p=>S.places.includes(p.id)).reduce((a,p)=>Math.max(a,p.mult),1);
-  return Math.round((TYPES[it.type].price + PATTERNS[it.pattern].bonus) * m);
+  return Math.round((TYPES[it.type].price + PATTERNS[it.pattern].bonus + (COLORS[it.color].bonus||0)) * placeMult());
 }
+const fmt = n => n+" zł";
+const wantText = w => COLORS[w.color][TYPES[w.type].g] + " " + TYPES[w.type].acc;
 
+// ---------- widoki ----------
 function renderDesigner(){
-  $("types").innerHTML = Object.entries(TYPES).map(([k,v])=>`<button class="${draft.type===k?'sel':''}" onclick="draft.type='${k}';renderDesigner()">${v.name}</button>`).join("");
-  $("colors").innerHTML = Object.entries(COLORS).map(([k,v])=>`<button class="sw ${draft.color===k?'sel':''}" style="background:${v}" title="${k}" onclick="draft.color='${k}';renderDesigner()"></button>`).join("");
-  $("patterns").innerHTML = Object.entries(PATTERNS).map(([k,v])=>{
-    if (S.patterns.includes(k)) return `<button class="${draft.pattern===k?'sel':''}" onclick="draft.pattern='${k}';renderDesigner()">${v.name}</button>`;
-    return `<button class="locked" ${S.coins<v.unlock?'disabled':''} onclick="buyPattern('${k}')">🔒 ${v.name} (${v.unlock} 🪙)</button>`;
-  }).join("");
+  $("types").innerHTML = S.types.map(k=>`<button class="${draft.type===k?'sel':''}" onclick="draft.type='${k}';renderDesigner()">${TYPES[k].name}</button>`).join("");
+  $("colors").innerHTML = S.colors.map(k=>`<button class="sw ${COLORS[k].glitter?'glit':''} ${draft.color===k?'sel':''}" style="${COLORS[k].glitter?'':'background:'+COLORS[k].hex}" title="${k}" onclick="draft.color='${k}';renderDesigner()"></button>`).join("");
+  $("patterns").innerHTML = S.patterns.map(k=>`<button class="${draft.pattern===k?'sel':''}" onclick="draft.pattern='${k}';renderDesigner()">${PATTERNS[k].name}</button>`).join("");
   $("preview").innerHTML = clothSVG(draft,"pv");
   $("cost").textContent = MAKE_COST;
   $("make").disabled = S.coins < MAKE_COST || S.shelf.length >= SHELF_SIZE;
@@ -147,81 +223,128 @@ function renderShelf(){
   for (let i=0;i<SHELF_SIZE;i++){
     const it = S.shelf[i];
     h += it
-      ? `<div class="item click" onclick="sell(${i})"><svg viewBox="0 0 100 120">${clothSVG(it,'s'+i)}</svg><div>${price(it)} 🪙</div></div>`
+      ? `<div class="item click" onclick="sell(${i})"><svg viewBox="0 0 100 120">${clothSVG(it,'s'+i)}</svg><div>${TYPES[it.type].name}</div><div><b>${fmt(price(it))}</b></div></div>`
       : `<div class="item">pusto</div>`;
   }
   $("shelf").innerHTML = h;
 }
+function renderShop(){
+  const group = (title, keys, data, kind) => {
+    const locked = Object.keys(data).filter(k=>!S[kind].includes(k));
+    if (!locked.length) return "";
+    return `<h3>${title}</h3><div class="row">` + locked.map(k=>{
+      const cost = data[k].unlock, label = data[k].name || k;
+      return `<button ${S.coins<cost?'disabled':''} onclick="unlock('${kind}','${k}')">🔒 ${label[0].toUpperCase()+label.slice(1)} – ${fmt(cost)}</button>`;
+    }).join("") + `</div>`;
+  };
+  const h = group("Ubrania", null, TYPES, "types") + group("Kolory", null, COLORS, "colors") + group("Wzory", null, PATTERNS, "patterns");
+  $("shop").innerHTML = h || "Wszystko odblokowane! 🎉";
+}
 function renderPlaces(){
   $("places").innerHTML = PLACES.map(p=>{
     const own = S.places.includes(p.id);
-    return `<div class="place ${own?'':'locked'}"><span>${own?'✅':'🔒'} <b>${p.name}</b> – ceny ×${p.mult}, klientki co ${p.every/1000}s</span>` +
-      (own ? "" : `<button ${S.coins<p.cost?'disabled':''} onclick="buyPlace('${p.id}')">Otwórz (${p.cost} 🪙)</button>`) + `</div>`;
+    return `<div class="place ${own?'':'locked'}"><span>${own?'✅':'🔒'} <b>${p.name}</b> – ceny ×${p.mult}, klientki co ${p.every/1000} s</span>` +
+      (own ? "" : `<button ${S.coins<p.cost?'disabled':''} onclick="buyPlace('${p.id}')">Otwórz (${fmt(p.cost)})</button>`) + `</div>`;
   }).join("");
 }
-function renderAll(){ $("coins").textContent = S.coins+" 🪙"; renderDesigner(); renderShelf(); renderPlaces(); renderCustomer(); save(); }
-
 function renderCustomer(){
+  $("bye").hidden = !customer;
   $("customer").innerHTML = customer
-    ? `<span class="face">${customer.face}</span><span>Dzień dobry! Szukam: <b>${customer.color} ${TYPES[customer.type].name.toLowerCase()}</b>. Coś ładnego, proszę 😊</span>`
+    ? `<span class="face">${customer.face}</span><div>Dzień dobry! Szukam:<div class="wants">${customer.wants.map(w=>`<span class="want ${w.done?'done':''}">${w.done?'✅':'🛍️'} ${wantText(w)}</span>`).join("")}</div></div>`
     : `<span class="face">☕</span><span>Czekam na klientkę…</span>`;
+}
+function renderAll(){
+  $("coins").textContent = fmt(S.coins);
+  $("mute").textContent = muted ? "🔕" : "🔔";
+  renderDesigner(); renderShelf(); renderShop(); renderPlaces(); renderCustomer(); save();
 }
 function say(t){ $("msg").textContent = t; }
 
+// ---------- akcje ----------
 function make(){
   if (S.coins < MAKE_COST || S.shelf.length >= SHELF_SIZE) return;
   S.coins -= MAKE_COST;
   S.shelf.push({ ...draft });
+  sound.pop();
   say("Nowe ubranie na półce! ✨");
   renderAll();
 }
 function sell(i){
   if (!customer) { say("Nie ma teraz klientki. Poczekaj chwilę 🙂"); return; }
   const it = S.shelf[i];
-  const matchT = it.type===customer.type, matchC = it.color===customer.color;
-  let mult = 1, txt = "Dziękuję, jakoś się przyda!";
-  if (matchT && matchC){ mult = 2;   txt = "Dokładnie takie chciałam! 😍 Podwójna cena!"; }
-  else if (matchT || matchC){ mult = 1.5; txt = "Prawie jak chciałam, bardzo ładne! 💕"; }
-  const gain = Math.round(price(it)*mult);
+  // wybierz najlepiej pasujące, jeszcze niezałatwione zamówienie
+  let best = null, bestMult = 0;
+  customer.wants.forEach(w=>{
+    if (w.done) return;
+    const m = (it.type===w.type && it.color===w.color) ? 2 : (it.type===w.type || it.color===w.color) ? 1.5 : 1;
+    if (m > bestMult) { best = w; bestMult = m; }
+  });
+  const txt = bestMult===2 ? "Dokładnie takie chciałam! 😍 Podwójna cena!" : bestMult===1.5 ? "Prawie jak chciałam, bardzo ładne! 💕" : "Dziękuję, jakoś się przyda!";
+  const gain = Math.round(price(it)*bestMult);
+  best.done = true; customer.total += gain;
   S.coins += gain; S.shelf.splice(i,1);
-  say(`${txt} +${gain} 🪙`);
+  sound.coin();
+  if (customer.wants.every(w=>w.done)) {
+    const bonus = customer.wants.length>1 ? Math.round(customer.total*ORDER_BONUS) : 0;
+    S.coins += bonus;
+    say(`${txt} +${fmt(gain)}` + (bonus ? ` · Cały komplet! Bonus +${fmt(bonus)} 🎁` : ""));
+    customer = null;
+    scheduleCustomer();
+  } else {
+    say(`${txt} +${fmt(gain)} · Jeszcze coś z listy!`);
+  }
+  renderAll();
+}
+function dismiss(){ if (!customer) return; customer = null; say("Do widzenia, zapraszamy ponownie! 👋"); scheduleCustomer(); renderAll(); }
+function unlock(kind, k){
+  const data = kind==="types" ? TYPES : kind==="colors" ? COLORS : PATTERNS;
+  if (S.coins < data[k].unlock) return;
+  S.coins -= data[k].unlock; S[kind].push(k);
+  draft[kind==="types"?"type":kind==="colors"?"color":"pattern"] = k;
+  sound.unlock(); say(`Odblokowane: ${data[k].name || k}! 🎨`); renderAll();
+}
+function buyPlace(id){ const p=PLACES.find(x=>x.id===id); if (S.coins<p.cost) return; S.coins-=p.cost; S.places.push(id); sound.unlock(); say(`Otwierasz sklep: ${p.name}! 🎉`); scheduleCustomer(); renderAll(); }
+
+function newCustomer(){
+  const maxItems = S.places.length>=3 ? 3 : 2;
+  const n = 1 + Math.floor(Math.random()*maxItems);
+  const wants = [];
+  for (let i=0;i<n;i++) wants.push({ type:rnd(S.types), color:rnd(S.colors), done:false });
+  customer = { face:rnd(["👩","👧","👵","👩‍🦰","🧑‍🦱","👱‍♀️"]), wants, total:0 };
+  sound.bell();
+  renderCustomer();
+}
+function interval(){ return Math.min(...PLACES.filter(p=>S.places.includes(p.id)).map(p=>p.every)); }
+function scheduleCustomer(){
+  clearTimeout(timer);
+  timer = setTimeout(()=>{ if (!customer) newCustomer(); scheduleCustomer(); }, interval());
+}
+
+function resetGame(){
+  if (!confirm("Na pewno zacząć od nowa? Stracisz wszystkie monety, ubrania i sklepy.")) return;
+  S = fresh();
+  draft = { type:"sukienka", color:"różowy", pattern:"gładki" };
   customer = null;
+  say("Nowa gra! Powodzenia w butiku 🎀");
   scheduleCustomer();
   renderAll();
 }
-function buyPattern(k){ const p=PATTERNS[k]; if (S.coins<p.unlock) return; S.coins-=p.unlock; S.patterns.push(k); draft.pattern=k; say(`Nowy wzór: ${p.name}! 🎨`); renderAll(); }
-function buyPlace(id){ const p=PLACES.find(x=>x.id===id); if (S.coins<p.cost) return; S.coins-=p.cost; S.places.push(id); say(`Otwierasz sklep: ${p.name}! 🎉`); scheduleCustomer(true); renderAll(); }
-
-function interval(){ return Math.min(...PLACES.filter(p=>S.places.includes(p.id)).map(p=>p.every)); }
-function scheduleCustomer(reset){
-  clearTimeout(timer);
-  timer = setTimeout(()=>{
-    if (!customer){
-      customer = { face:rnd(["👩","👧","👵","👩‍🦰","🧑‍🦱","👱‍♀️"]), type:rnd(Object.keys(TYPES)), color:rnd(Object.keys(COLORS)) };
-      renderCustomer();
-    }
-    scheduleCustomer();
-  }, interval());
+function toggleMute(){
+  muted = !muted; try { localStorage.setItem("butik-mute", muted?"1":"0"); } catch(e){}
+  if (!muted) sound.pop();
+  renderAll();
 }
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
 
-function resetGame(){
-  if (!confirm("Na pewno zacząć od nowa? Stracisz wszystkie monety, ubrania i sklepy.")) return;
-  S = { coins:50, shelf:[], places:["rynek"], patterns:["gładki","kropki"] };
-  draft = { type:"sukienka", color:"różowy", pattern:"gładki" };
-  customer = null;
-  say("Nowa gra! Powodzenia w butiku 🎀");
-  scheduleCustomer(true);
-  renderAll();
-}
-
 $("reset").onclick = resetGame;
 $("make").onclick = make;
+$("bye").onclick = dismiss;
+$("mute").onclick = toggleMute;
 renderAll();
 scheduleCustomer();
-// pierwsza klientka od razu, żeby nie czekać
-setTimeout(()=>{ if(!customer){ customer={face:"👩",type:"sukienka",color:"różowy"}; renderCustomer(); } }, 1500);
+// pierwsza klientka szybko, żeby nie czekać
+setTimeout(()=>{ if(!customer){ customer={face:"👩",wants:[{type:"sukienka",color:"różowy",done:false}],total:0}; sound.bell(); renderCustomer(); } }, 1500);
 </script>
 </body>
 </html>
