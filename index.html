@@ -143,7 +143,7 @@
     header h1 { font-size:1.6rem; }
     #coins { font-size:1.05rem; padding:2px 12px 2px 5px; }
     #mute { width:34px; height:34px; }
-    #hero { height:128px; }
+    #hero { height:178px; }
     main { gap:8px; padding-bottom:16px; }
     section { padding:8px 14px 10px; border-radius:18px; }
     section::before { inset:4px; border-radius:14px; }
@@ -512,7 +512,61 @@ function patternDefs(c, text){
     <linearGradient id="sh" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#1a0a2e" stop-opacity=".28"/></linearGradient>
   </defs>`;
 }
+// ---------- ubrania rastrowe (bajkowe ilustracje, kolor/wzór nakładane w locie) ----------
+// Źródło: szary rysunek na białym tle. Z niego powstają: maska sylwetki i warstwa cieni (mnożona przez kolor/wzór).
+const RASTER = {};                       // typ -> { shade, mask, w, h }
+const RASTER_SRC = { sukienka:{ src:"assets/sukienka.png", x:8, y:16, w:84 } };   // x,y,w w układzie 100×120
+function loadRaster(type){
+  const cfg = RASTER_SRC[type], im = new Image();
+  im.onload = () => {
+    const W = im.naturalWidth, H = im.naturalHeight;
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const g = c.getContext("2d"); g.drawImage(im,0,0);
+    const d = g.getImageData(0,0,W,H), p = d.data, bg = new Uint8Array(W*H), st = [];
+    const lum = i => (p[i*4]+p[i*4+1]+p[i*4+2])/3;
+    for (let x=0;x<W;x++) st.push(x,(H-1)*W+x); for (let y=0;y<H;y++) st.push(y*W,y*W+W-1);
+    while (st.length) {            // tło = jasne piksele połączone z krawędzią
+      const i = st.pop(); if (bg[i] || lum(i)<=247) continue; bg[i] = 1;
+      const x = i%W, y = (i/W)|0;
+      if (x>0) st.push(i-1); if (x<W-1) st.push(i+1); if (y>0) st.push(i-W); if (y<H-1) st.push(i+W);
+    }
+    let x0=W,y0=H,x1=0,y1=0;
+    for (let i=0;i<W*H;i++) if (!bg[i]) { const x=i%W, y=(i/W)|0; if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
+    const w = x1-x0+1, h = y1-y0+1;
+    const mk = () => { const k = document.createElement("canvas"); k.width = w; k.height = h; const kg = k.getContext("2d"); return [k,kg,kg.createImageData(w,h)]; };
+    const [sc,sg,sd] = mk(), [mc,mg,md] = mk();
+    for (let y=0;y<h;y++) for (let x=0;x<w;x++) {
+      const si = (y+y0)*W + x+x0, o = (y*w+x)*4;
+      if (bg[si]) continue;
+      const l = Math.min(1, Math.max(0, (lum(si)-70)/168)), k = 255*(0.25+0.75*l);
+      sd.data[o]=sd.data[o+1]=sd.data[o+2]=k; sd.data[o+3]=255;
+      md.data[o]=md.data[o+1]=md.data[o+2]=255; md.data[o+3]=255;
+    }
+    sg.putImageData(sd,0,0); mg.putImageData(md,0,0);
+    RASTER[type] = { shade:sc.toDataURL(), mask:mc.toDataURL(), w:cfg.w, h:cfg.w*h/w };
+    renderAll();
+  };
+  im.src = cfg.src;
+}
+function rasterCloth(it, uid, R){
+  const T = RASTER_SRC[it.type], col = COLORS[it.color];
+  const plain = it.pattern==="gładki" || it.pattern==="napis";
+  const pat = !plain ? it.pattern : (col.glitter ? "glit" : null);
+  const fill = pat ? `url(#${uid}p-${pat})` : col.hex;
+  const at = `x="${T.x}" y="${T.y}" width="${R.w}" height="${R.h.toFixed(1)}"`;
+  let label = "";
+  if (it.pattern==="napis") {
+    const t = ((it.text || DEFAULT_TEXT).trim() || DEFAULT_TEXT), [lx,ly,lw] = LABEL[it.type];
+    const size = Math.max(3.5, Math.min(11, lw/(t.length*0.6)));
+    label = `<text x="${lx}" y="${ly}" font-size="${size.toFixed(1)}" font-weight="bold" text-anchor="middle" fill="${col.ink||"#fff"}" stroke="${col.ink?'none':'#0000002e'}" stroke-width=".4">${esc(t)}</text>`;
+  }
+  return patternDefs(it.color, it.text).replace(/id="(p-|sh)/g,`id="${uid}$1`) +
+    `<defs><mask id="${uid}rm" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="135"><image href="${R.mask}" ${at}/></mask></defs>` +
+    `<g mask="url(#${uid}rm)"><rect ${at} fill="${fill}"/></g>` +
+    `<image href="${R.shade}" ${at} style="mix-blend-mode:multiply"/>${label}`;
+}
 function clothSVG(it, uid){
+  if (RASTER[it.type]) return rasterCloth(it, uid, RASTER[it.type]);
   const col = COLORS[it.color];
   const plain = it.pattern==="gładki" || it.pattern==="napis";   // napis = jeden napis na gładkim tle
   const p = !plain ? it.pattern : (col.glitter ? "glit" : null);
@@ -788,6 +842,7 @@ $("txt").oninput = e => {   // bez pełnego renderu, żeby klawiatura nie znika�
 };
 buildHero(); animateHero();
 renderWho(); renderAll();
+Object.keys(RASTER_SRC).forEach(loadRaster);
 if (S.name) say(`Witaj z powrotem, ${S.name}! ${S.avatar}`); else showWelcome();
 scheduleCustomer();
 // pierwsza klientka szybko, żeby nie czekać
