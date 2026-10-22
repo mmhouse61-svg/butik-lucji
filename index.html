@@ -3,90 +3,175 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f48fb1">
+<meta name="theme-color" content="#3d1a5c">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Butik">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <title>Butik Łucji</title>
 <style>
-  :root { --bg:#fff4f8; --card:#fff; --pink:#f48fb1; --dark:#6a1b4d; --gold:#ffc107; }
+  :root {
+    --plum:#3d1a5c; --purple:#6b3a9e; --rose:#d94f8c; --gold:#f2b84b; --gold-d:#b9801a;
+    --cream:#fffaf0; --lav:#efe6fa; --ink:#3b2250; --mint:#d7f5e6;
+    --script:"Snell Roundhand","Apple Chancery","Savoye LET","Brush Script MT",cursive;
+    --body:ui-rounded,"SF Pro Rounded","Avenir Next","Trebuchet MS",system-ui,sans-serif;
+  }
   * { box-sizing:border-box; }
-  body { margin:0; padding:0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); -webkit-user-select:none; user-select:none; font-family:"Trebuchet MS",sans-serif; background:var(--bg); color:var(--dark); }
-  header { position:sticky; top:0; z-index:10; display:flex; justify-content:space-between; align-items:center; gap:8px; padding:calc(10px + env(safe-area-inset-top)) 16px 10px; background:var(--pink); color:#fff; box-shadow:0 2px 8px #0003; }
-  header h1 { margin:0; font-size:1.3rem; }
-  .right { display:flex; align-items:center; gap:8px; }
-  #coins { font-size:1.3rem; font-weight:bold; background:#fff; color:var(--dark); padding:4px 14px; border-radius:20px; }
-  #mute { padding:4px 10px; font-size:1.2rem; border-radius:20px; }
-  main { max-width:900px; margin:0 auto; padding:12px; display:grid; gap:12px; }
-  section { background:var(--card); border-radius:16px; padding:14px; box-shadow:0 2px 8px #0001; }
-  h2 { margin:0 0 10px; font-size:1.1rem; }
-  h3 { margin:10px 0 6px; font-size:.95rem; }
+  html { background:#cdb8ea; }
+  body {
+    margin:0; padding:0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    -webkit-user-select:none; user-select:none; font-family:var(--body); color:var(--ink);
+    background:
+      radial-gradient(circle at 15% 20%,#fff9 0 2px,transparent 3px),
+      radial-gradient(circle at 80% 12%,#fff9 0 2px,transparent 3px),
+      radial-gradient(circle at 60% 55%,#fff7 0 1.5px,transparent 2.5px),
+      radial-gradient(circle at 30% 80%,#fff8 0 2px,transparent 3px),
+      radial-gradient(circle at 90% 70%,#fff8 0 1.5px,transparent 2.5px),
+      linear-gradient(180deg,#d9c6f3 0%,#f7d9e8 45%,#fde9d4 100%);
+    background-attachment:fixed; min-height:100vh;
+  }
+  /* ---------- nagłówek ---------- */
+  header {
+    position:sticky; top:0; z-index:20; display:flex; justify-content:space-between; align-items:center; gap:8px;
+    padding:calc(8px + env(safe-area-inset-top)) 16px 8px;
+    background:linear-gradient(180deg,#5b2a8c,#3d1a5c); border-bottom:3px solid var(--gold); box-shadow:0 4px 14px #3d1a5c66;
+  }
+  header h1 { margin:0; font-family:var(--script); font-weight:normal; font-size:2rem; line-height:1.1; color:var(--gold);
+    text-shadow:0 0 12px #f2b84b88, 0 2px 0 #00000055; }
+  header h1 small { font-size:1.1rem; color:#fff; opacity:.9; }
+  .right { display:flex; align-items:center; gap:10px; }
+  #coins { display:flex; align-items:center; gap:8px; font-size:1.2rem; font-weight:bold; background:var(--cream); color:var(--plum);
+    padding:4px 14px 4px 6px; border-radius:24px; border:2px solid var(--gold); }
+  #coins::before { content:"zł"; display:grid; place-items:center; width:26px; height:26px; border-radius:50%; font-size:.7rem;
+    background:radial-gradient(circle at 35% 30%,#ffe9a0,var(--gold) 60%,var(--gold-d)); color:#6b4300; }
+  #mute { width:40px; height:40px; padding:0; border-radius:50%; font-size:1.2rem; }
+  /* ---------- plansza ---------- */
+  #hero { display:block; width:100%; height:clamp(130px,24vw,200px); }
+  main { max-width:920px; margin:0 auto; padding:0 12px 24px; display:grid; gap:14px; }
+  section {
+    position:relative; background:var(--cream); border-radius:22px; padding:16px;
+    border:2px solid var(--gold); box-shadow:0 0 0 4px #fffaf0aa, 0 8px 22px #5b2a8c33;
+  }
+  section::before { content:""; position:absolute; inset:5px; border-radius:17px; border:1px dashed #d9a93c88; pointer-events:none; }
+  h2 { margin:0 0 12px; font-family:var(--script); font-weight:normal; font-size:1.6rem; color:var(--purple); }
+  h2::after { content:" ✦"; color:var(--gold); font-size:1rem; }
+  h3 { margin:12px 0 6px; font-size:.85rem; letter-spacing:.08em; text-transform:uppercase; color:var(--purple); }
   .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-  button { touch-action:manipulation; font:inherit; border:2px solid var(--pink); background:#fff; color:var(--dark); border-radius:12px; padding:8px 12px; cursor:pointer; }
-  button.sel { background:var(--pink); color:#fff; }
-  button.main { background:var(--gold); border-color:var(--gold); font-weight:bold; }
-  button:disabled { opacity:.4; cursor:not-allowed; }
-  .sw { width:34px; height:34px; border-radius:50%; padding:0; border:3px solid #fff; box-shadow:0 0 0 2px #ccc; }
-  .sw.sel { box-shadow:0 0 0 3px var(--dark); }
+  button {
+    touch-action:manipulation; font:inherit; color:var(--plum); cursor:pointer;
+    background:linear-gradient(180deg,#fff,#f2e8fb); border:2px solid #c9b0e6; border-radius:999px; padding:8px 14px;
+    box-shadow:0 2px 0 #c9b0e6; transition:transform .08s;
+  }
+  button:active { transform:translateY(2px); box-shadow:none; }
+  button.sel { background:linear-gradient(180deg,#8a52bf,var(--purple)); color:#fff; border-color:var(--plum); box-shadow:0 2px 0 var(--plum); }
+  button.main { font-weight:bold; font-size:1.05rem; padding:10px 20px; color:#4a2b00;
+    background:linear-gradient(180deg,#ffe08a,var(--gold)); border-color:var(--gold-d); box-shadow:0 3px 0 var(--gold-d); }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  .sw { width:36px; height:36px; border-radius:50%; padding:0; border:3px solid #fff; box-shadow:0 0 0 2px #c9b0e6; }
+  .sw.sel { box-shadow:0 0 0 3px var(--plum); transform:scale(1.1); }
   .sw.glit { background:radial-gradient(circle at 30% 30%,#fff 0 8%,transparent 9%),radial-gradient(circle at 70% 60%,#ffe082 0 8%,transparent 9%),#ec6fd1; }
-  #preview { width:160px; height:190px; background:#fce4ec; border-radius:12px; }
-  .shelf { display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:8px; }
-  .item { text-align:center; border:2px dashed #e0b; border-radius:12px; padding:6px; background:#fff8fb; min-height:140px; font-size:.85rem; }
-  .item.click { cursor:pointer; border-style:solid; }
-  .item.click:hover { background:#ffe3ef; }
-  .item svg { width:80px; height:95px; }
-  .customer { font-size:1.05rem; min-height:60px; display:flex; align-items:center; gap:12px; }
-  .customer .face { font-size:2.4rem; }
+  /* ---------- klientka ---------- */
+  .customer { display:flex; gap:14px; align-items:center; min-height:84px; }
+  .portrait { flex:none; width:76px; height:76px; border-radius:50%; display:grid; place-items:center; font-size:2.6rem;
+    background:radial-gradient(circle at 35% 30%,#fff,var(--lav)); border:3px solid var(--gold); box-shadow:0 0 0 3px var(--cream), 0 4px 10px #5b2a8c44; }
+  .portrait.ring { animation:ring .9s ease-in-out 2; }
+  .bubble { position:relative; background:#fff; border:2px solid #c9b0e6; border-radius:18px; padding:10px 14px; flex:1; }
+  .bubble::before { content:""; position:absolute; left:-10px; top:26px; width:16px; height:16px; background:#fff;
+    border-left:2px solid #c9b0e6; border-bottom:2px solid #c9b0e6; transform:rotate(45deg); }
   .wants { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
-  .want { background:#ffe3ef; border-radius:14px; padding:3px 10px; font-size:.95rem; }
-  .want.done { background:#d7f5dd; text-decoration:line-through; }
-  #msg { min-height:1.4em; font-weight:bold; margin-top:6px; }
-  .place { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #f3d; }
+  .want { background:#fdecc8; border:1.5px solid var(--gold); border-radius:12px; padding:3px 10px; font-size:.95rem; }
+  .want.done { background:var(--mint); border-color:#7fcf9f; text-decoration:line-through; opacity:.8; }
+  #msg { min-height:1.4em; font-weight:bold; margin-top:10px; color:var(--rose); }
+  /* ---------- półka ---------- */
+  .shelf { display:grid; grid-template-columns:repeat(auto-fill,minmax(112px,1fr)); gap:10px; padding-top:6px; position:relative; }
+  .shelf::before { content:""; position:absolute; left:0; right:0; top:14px; height:5px; border-radius:3px;
+    background:linear-gradient(180deg,#e9c06a,var(--gold-d)); }
+  .item { position:relative; text-align:center; padding:22px 4px 8px; border-radius:16px; font-size:.82rem; min-height:152px; }
+  .item.empty { color:#b9a6cf; border:2px dashed #dccbf0; display:grid; place-items:center; }
+  .item.click { cursor:pointer; background:radial-gradient(circle at 50% 35%,#fff,#fbeefa); border:2px solid #ecd9f6; }
+  .item.click:active { transform:scale(.97); }
+  .item .hook { position:absolute; top:-2px; left:50%; width:36px; height:18px; transform:translateX(-50%); }
+  .item svg.cl { width:82px; height:98px; filter:drop-shadow(0 3px 3px #3d1a5c33); }
+  .tag { display:inline-block; margin-top:2px; padding:1px 10px; border-radius:10px; background:var(--gold); color:#4a2b00; font-weight:bold; }
+  /* ---------- pracownia ---------- */
+  .studio { display:flex; flex-wrap:wrap; gap:16px; align-items:flex-start; }
+  .stage { position:relative; width:180px; height:210px; flex:none; border-radius:90px 90px 16px 16px; overflow:hidden;
+    background:radial-gradient(ellipse at 50% 30%,#fff 0,#f7e6fb 45%,#dcc4f2 100%); border:3px solid var(--gold); box-shadow:inset 0 0 18px #b995e066; }
+  .stage::after { content:""; position:absolute; left:0; right:0; bottom:0; height:26px; background:linear-gradient(180deg,#e8d3f6,#cdb1e8); }
+  #preview { position:absolute; left:14px; top:18px; width:152px; height:182px; z-index:1; filter:drop-shadow(0 6px 4px #3d1a5c44); }
+  .spark { position:absolute; color:var(--gold); animation:twinkle 2.4s ease-in-out infinite; z-index:2; }
+  .controls { flex:1; min-width:230px; }
+  .controls h3:first-child { margin-top:0; }
+  #txtbox { margin-top:10px; }
+  #txt { width:100%; max-width:260px; font:inherit; font-size:1.05rem; padding:8px 14px; border-radius:999px; border:2px solid var(--gold);
+    background:#fff; color:var(--plum); -webkit-user-select:text; user-select:text; }
+  /* ---------- hurtownia i sklepy ---------- */
+  .shopbtn { border-color:var(--gold); box-shadow:0 2px 0 var(--gold-d); background:linear-gradient(180deg,#fffdf4,#fdecc8); }
+  .shopbtn .dot { display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:4px; vertical-align:-1px; border:1px solid #0003; }
+  .place { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:9px 0; border-bottom:1px dashed #e2cf9f; }
   .place:last-child { border:none; }
-  .locked { opacity:.55; }
+  .place b { font-family:var(--script); font-weight:normal; font-size:1.25rem; color:var(--purple); }
+  .place.locked { opacity:.7; }
+  .place small { color:#8a6fa8; }
+  /* ---------- efekty ---------- */
+  .float { position:fixed; z-index:50; pointer-events:none; font-weight:bold; font-size:1.3rem; color:var(--gold-d);
+    text-shadow:0 1px 0 #fff, 0 0 8px #fff; animation:floatup 1.1s ease-out forwards; }
+  .float.p { font-size:1rem; color:var(--gold); animation-name:burst; }
+  @keyframes floatup { from { transform:translate(-50%,0); opacity:1; } to { transform:translate(-50%,-70px); opacity:0; } }
+  @keyframes burst { from { transform:translate(-50%,0) scale(.6); opacity:1; } to { transform:translate(calc(-50% + var(--dx)),var(--dy)) scale(1.2); opacity:0; } }
+  @keyframes twinkle { 0%,100% { opacity:.25; transform:scale(.7); } 50% { opacity:1; transform:scale(1.2); } }
+  @keyframes ring { 0%,100% { transform:rotate(0); } 20% { transform:rotate(-14deg); } 40% { transform:rotate(12deg); } 60% { transform:rotate(-8deg); } 80% { transform:rotate(6deg); } }
+  @media (prefers-reduced-motion:reduce) { .spark,.portrait.ring,.float { animation:none; } }
 </style>
 </head>
 <body>
 <header>
-  <h1>👗 Butik Łucji</h1>
-  <div class="right"><button id="mute" title="Dźwięk">🔔</button><div id="coins">0 zł</div></div>
+  <h1>Butik Łucji</h1>
+  <div class="right"><button id="mute" title="Dźwięk">🔔</button><div id="coins">0</div></div>
 </header>
+<svg id="hero" viewBox="0 -24 600 174" preserveAspectRatio="xMidYMax slice" aria-hidden="true"></svg>
 <main>
   <section>
-    <h2>🛎️ Klientka</h2>
-    <div class="customer" id="customer">Czekam na klientkę…</div>
+    <h2>Klientka</h2>
+    <div class="customer" id="customer"></div>
     <div id="msg"></div>
-    <div class="row" style="margin-top:6px"><button id="bye" hidden>👋 Pożegnaj klientkę</button></div>
+    <div class="row" style="margin-top:8px"><button id="bye" hidden>👋 Pożegnaj klientkę</button></div>
   </section>
 
   <section>
-    <h2>🪞 Półka sklepowa (kliknij ubranie, żeby sprzedać)</h2>
+    <h2>Półka sklepowa</h2>
+    <div style="margin:-6px 0 10px;font-size:.9rem;color:#8a6fa8">Stuknij ubranie, żeby je sprzedać.</div>
     <div class="shelf" id="shelf"></div>
   </section>
 
   <section>
-    <h2>✏️ Pracownia – zaprojektuj ubranie</h2>
-    <div class="row">
-      <svg id="preview" viewBox="0 0 100 120"></svg>
-      <div>
-        <div class="row" id="types"></div><br>
-        <div class="row" id="colors"></div><br>
-        <div class="row" id="patterns"></div><br>
-        <button class="main" id="make">✂️ Uszyj (<span id="cost">10</span> zł)</button>
+    <h2>Pracownia</h2>
+    <div class="studio">
+      <div class="stage">
+        <span class="spark" style="left:18px;top:60px">✦</span>
+        <span class="spark" style="right:20px;top:36px;animation-delay:.8s">✧</span>
+        <span class="spark" style="right:28px;top:120px;animation-delay:1.5s">✦</span>
+        <svg id="preview" viewBox="0 0 100 120"></svg>
+      </div>
+      <div class="controls">
+        <h3>Ubranie</h3><div class="row" id="types"></div>
+        <h3>Kolor</h3><div class="row" id="colors"></div>
+        <h3>Wzór</h3><div class="row" id="patterns"></div>
+        <div id="txtbox" hidden><h3>Twój napis</h3><input id="txt" maxlength="12" placeholder="Wpisz napis" autocomplete="off" autocapitalize="off"></div>
+        <br><button class="main" id="make">Uszyj za <span id="cost">10</span> zł</button>
       </div>
     </div>
   </section>
 
   <section>
-    <h2>🛍️ Hurtownia – odblokuj nowości</h2>
+    <h2>Hurtownia</h2>
     <div id="shop"></div>
   </section>
 
   <section>
-    <h2>📍 Moje sklepy we Wrocławiu</h2>
+    <h2>Moje sklepy we Wrocławiu</h2>
     <div id="places"></div>
   </section>
 
@@ -97,18 +182,31 @@
 
 <script>
 // g = rodzaj: f (ona), m (on), p (liczba mnoga); acc = biernik ("szukam ...")
+// extra = detale rysowane na wierzchu (szwy, kieszenie, guziki)
+const SEAM = 'fill="none" stroke="#3b225066" stroke-width="1.4" stroke-linecap="round"';
 const TYPES = {
-  sukienka:{ name:"Sukienka", acc:"sukienkę", g:"f", price:20, unlock:0,   path:"M35 15 L45 15 Q50 25 55 15 L65 15 L68 45 L82 105 L18 105 L32 45 Z" },
-  spodnie: { name:"Spodnie",  acc:"spodnie",  g:"p", price:15, unlock:0,   path:"M30 15 L70 15 L72 45 L66 108 L53 108 L50 55 L47 108 L34 108 L28 45 Z" },
-  bluza:   { name:"Bluza",    acc:"bluzę",    g:"f", price:18, unlock:0,   path:"M35 15 Q50 28 65 15 L88 40 L78 55 L70 48 L70 100 L30 100 L30 48 L22 55 L12 40 Z" },
-  spodnica:{ name:"Spódnica", acc:"spódnicę", g:"f", price:12, unlock:0,   path:"M32 25 L68 25 L72 40 L88 105 L12 105 L28 40 Z" },
-  kapelusz:{ name:"Kapelusz", acc:"kapelusz", g:"m", price:14, unlock:80,  path:"M34 70 L36 40 Q50 28 64 40 L66 70 Q92 72 90 80 Q50 96 10 80 Q8 72 34 70 Z" },
-  szorty:  { name:"Krótkie spodenki", acc:"krótkie spodenki", g:"p", price:14, unlock:120, path:"M28 30 L72 30 L75 70 L54 70 L50 52 L46 70 L25 70 Z" },
-  beret:   { name:"Beret",    acc:"beret",    g:"m", price:14, unlock:100, path:"M18 72 Q12 45 50 40 Q88 45 82 72 Q50 84 18 72 Z M48 40 L48 30 L52 30 L52 40 Z" },
-  krawat:  { name:"Krawat",   acc:"krawat",   g:"m", price:10, unlock:150, path:"M42 15 L58 15 L55 30 L62 90 L50 105 L38 90 L45 30 Z" },
+  sukienka:{ name:"Sukienka", acc:"sukienkę", g:"f", price:20, unlock:0,   path:"M35 15 L45 15 Q50 25 55 15 L65 15 L68 45 L82 105 L18 105 L32 45 Z",
+             extra:`<path d="M33 48 Q50 54 67 48" ${SEAM}/><path d="M24 98 Q50 106 76 98" ${SEAM} stroke-dasharray="2 2.5"/>` },
+  spodnie: { name:"Spodnie",  acc:"spodnie",  g:"p", price:15, unlock:0,   path:"M30 15 L70 15 L72 45 L66 108 L53 108 L50 55 L47 108 L34 108 L28 45 Z",
+             extra:`<path d="M29 23 H71" ${SEAM}/><path d="M50 55 V23" ${SEAM}/><path d="M36 100 H48 M54 100 H64" ${SEAM} stroke-dasharray="2 2.5"/>` },
+  bluza:   { name:"Bluza",    acc:"bluzę",    g:"f", price:18, unlock:0,   path:"M35 15 Q50 28 65 15 L88 40 L78 55 L70 48 L70 100 L30 100 L30 48 L22 55 L12 40 Z",
+             extra:`<path d="M38 72 H62 L60 88 H40 Z" ${SEAM}/><path d="M31 94 H69" ${SEAM}/><path d="M36 19 Q50 31 64 19" ${SEAM}/>` },
+  spodnica:{ name:"Spódnica", acc:"spódnicę", g:"f", price:12, unlock:0,   path:"M32 25 L68 25 L72 40 L88 105 L12 105 L28 40 Z",
+             extra:`<path d="M31 31 H69" ${SEAM}/><path d="M44 31 L36 104 M56 31 L64 104" ${SEAM} opacity=".6"/>` },
+  kapelusz:{ name:"Kapelusz", acc:"kapelusz", g:"m", price:14, unlock:80,  path:"M34 70 L36 40 Q50 28 64 40 L66 70 Q92 72 90 80 Q50 96 10 80 Q8 72 34 70 Z",
+             extra:`<path d="M35 63 Q50 69 65 63" fill="none" stroke="#3b225099" stroke-width="5"/><path d="M13 78 Q50 92 87 78" ${SEAM}/>` },
+  szorty:  { name:"Krótkie spodenki", acc:"krótkie spodenki", g:"p", price:14, unlock:120, path:"M28 30 L72 30 L75 70 L54 70 L50 52 L46 70 L25 70 Z",
+             extra:`<path d="M28 37 H72" ${SEAM}/><path d="M50 37 V52" ${SEAM}/><path d="M28 64 H46 M54 64 H72" ${SEAM} stroke-dasharray="2 2.5"/>` },
+  beret:   { name:"Beret",    acc:"beret",    g:"m", price:14, unlock:100, path:"M18 72 Q12 45 50 40 Q88 45 82 72 Q50 84 18 72 Z M48 40 L48 30 L52 30 L52 40 Z",
+             extra:`<path d="M22 66 Q50 78 78 66" ${SEAM}/>` },
+  krawat:  { name:"Krawat",   acc:"krawat",   g:"m", price:10, unlock:150, path:"M42 15 L58 15 L55 30 L62 90 L50 105 L38 90 L45 30 Z",
+             extra:`<path d="M42 15 L58 15 L55 30 L45 30 Z" fill="#3b225055"/>` },
   koszula: { name:"Koszula",  acc:"koszulę",  g:"f", price:22, unlock:200, path:"M33 18 L44 14 L50 30 L56 14 L67 18 L86 34 L76 48 L70 42 L70 100 L30 100 L30 42 L24 48 L14 34 Z",
-             extra:'<path d="M50 30 V100" stroke="#0005" stroke-width="1.5"/><circle cx="50" cy="45" r="1.8" fill="#0006"/><circle cx="50" cy="60" r="1.8" fill="#0006"/><circle cx="50" cy="75" r="1.8" fill="#0006"/>' }
+             extra:`<path d="M50 30 V100" ${SEAM}/><path d="M44 14 L50 30 L56 14" ${SEAM}/><circle cx="50" cy="45" r="1.8" fill="#3b225088"/><circle cx="50" cy="60" r="1.8" fill="#3b225088"/><circle cx="50" cy="75" r="1.8" fill="#3b225088"/>` }
 };
+// miejsce napisu na ubraniu: [środek x, linia bazowa y, maks. szerokość]
+const LABEL = { sukienka:[50,72,36], spodnie:[50,40,34], bluza:[50,66,34], spodnica:[50,72,40], kapelusz:[50,56,22],
+  szorty:[50,56,34], beret:[50,60,40], krawat:[50,72,9], koszula:[50,90,34] };
 // formy: m (on), f (ona, biernik), p (liczba mnoga); ink = kolor wzoru
 const COLORS = {
   czerwony: { m:"czerwony", f:"czerwoną", p:"czerwone", hex:"#e53935", unlock:0 },
@@ -130,7 +228,7 @@ const PATTERNS = {
   serduszka:{ name:"Serduszka", bonus:8,  unlock:90 },
   kratka:   { name:"Kratka",    bonus:8,  unlock:120 },
   kwiatki:  { name:"Kwiatki",   bonus:10, unlock:140 },
-  napis:    { name:"Napis",     bonus:12, unlock:160 },
+  napis:    { name:"Własny napis", bonus:12, unlock:160 },
   gwiazdki: { name:"Gwiazdki",  bonus:10, unlock:200 }
 };
 const PLACES = [
@@ -142,14 +240,14 @@ const PLACES = [
   { id:"dominik", name:"Galeria Dominikańska",cost:1200, mult:3.5, every:3500 },
   { id:"wroclavia",name:"Wroclavia",          cost:2000, mult:4.5, every:3000 }
 ];
-const SHELF_SIZE = 6, MAKE_COST = 10, ORDER_BONUS = 0.15;
+const SHELF_SIZE = 6, MAKE_COST = 10, ORDER_BONUS = 0.15, DEFAULT_TEXT = "Łucja";
 
 const fresh = () => ({ coins:50, shelf:[], places:["rynek"],
   types:Object.keys(TYPES).filter(k=>!TYPES[k].unlock),
   colors:Object.keys(COLORS).filter(k=>!COLORS[k].unlock),
-  patterns:["gładki","kropki"] });
+  patterns:["gładki","kropki"], text:DEFAULT_TEXT });
 let S = { ...fresh(), ...(load() || {}) };
-let draft = { type:"sukienka", color:"różowy", pattern:"gładki" };
+let draft = { type:"sukienka", color:"różowy", pattern:"gładki", text:S.text };
 let customer = null, timer = null;
 let muted = false; try { muted = localStorage.getItem("butik-mute")==="1"; } catch(e){}
 
@@ -157,6 +255,7 @@ function load(){ try { return JSON.parse(localStorage.getItem("butik")); } catch
 function save(){ try { localStorage.setItem("butik", JSON.stringify(S)); } catch(e){} }
 const $ = id => document.getElementById(id);
 const rnd = a => a[Math.floor(Math.random()*a.length)];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 // ---------- dźwięk (WebAudio, bez plików) ----------
 let AC = null;
@@ -174,32 +273,89 @@ function tone(freq, start, dur, vol, type){
   o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t+dur+0.05);
 }
 const sound = {
-  bell(){ tone(1318,0,1.1,.25); tone(2637,0,.6,.08); tone(988,.45,1.3,.25); tone(1976,.45,.7,.08); }, // ding-dong dzwonka
+  bell(){ tone(1318,0,1.1,.25); tone(2637,0,.6,.08); tone(988,.45,1.3,.25); tone(1976,.45,.7,.08); },
   coin(){ tone(1568,0,.12,.2,"square"); tone(2093,.1,.35,.2,"square"); },
   pop(){ tone(520,0,.1,.2); tone(780,.07,.12,.15); },
   unlock(){ [523,659,784,1047].forEach((f,i)=>tone(f,i*.1,.3,.2)); }
 };
 document.addEventListener("pointerdown", audio, { passive:true });
 
+// ---------- ilustracja: Rynek we Wrocławiu z krasnalem ----------
+function buildHero(){
+  const pal = ["#f6a9a0","#f9d98a","#9fd8c0","#a9bff0","#f4a3c6","#fbc98f","#c4aeea"];
+  const roof = ["#c4564b","#b48a2c","#4f9c80","#5a73bf","#c25b8c","#c9803a","#7d63b8"];
+  let h = `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6c3fa0"/><stop offset=".55" stop-color="#e58fb5"/><stop offset="1" stop-color="#ffd9a0"/></linearGradient></defs>
+  <rect y="-24" width="600" height="174" fill="url(#sky)"/>
+  <circle cx="470" cy="62" r="22" fill="#fff3c4" opacity=".95"/>
+  <g fill="#fff" opacity=".85"><circle cx="40" cy="22" r="1.5"/><circle cx="120" cy="40" r="1.2"/><circle cx="210" cy="16" r="1.6"/><circle cx="330" cy="30" r="1.3"/><circle cx="410" cy="14" r="1.5"/><circle cx="560" cy="28" r="1.4"/><circle cx="520" cy="10" r="1.1"/></g>
+  <g fill="#fff" opacity=".35"><ellipse cx="120" cy="64" rx="38" ry="9"/><ellipse cx="148" cy="58" rx="22" ry="8"/><ellipse cx="380" cy="48" rx="34" ry="8"/></g>`;
+  // kamieniczki z szczytami
+  const hs = [58,74,64,82,60,0,0,0,70,56,80,66,76,60];
+  let x = -6;
+  hs.forEach((ht,i)=>{
+    if (!ht) { x += 0; return; }
+    if (i===5) return;
+    const w = 44, c = pal[i%pal.length], r = roof[i%roof.length];
+    const y = 150-ht;
+    h += `<g><rect x="${x}" y="${y}" width="${w}" height="${ht}" fill="${c}"/>
+      <polygon points="${x},${y} ${x+w/2},${y-16} ${x+w},${y}" fill="${r}"/>
+      <polygon points="${x+8},${y} ${x+w/2},${y-9} ${x+w-8},${y}" fill="${c}" opacity=".5"/>`;
+    for (let wy=y+10; wy<146-10; wy+=20) for (let wx of [x+8,x+27]) h += `<rect x="${wx}" y="${wy}" width="9" height="12" rx="4" fill="#fff0b8"/>`;
+    h += `</g>`;
+    x += w - 2;
+  });
+  // ratusz
+  h += `<g><rect x="262" y="74" width="76" height="76" fill="#ecc9a0"/><rect x="262" y="74" width="76" height="6" fill="#c9966a"/>
+    <rect x="282" y="34" width="36" height="46" fill="#e2b98a"/><polygon points="278,36 300,0 322,36" fill="#b8453f"/>
+    <circle cx="300" cy="52" r="8" fill="#fff8e1" stroke="#8a5a2b" stroke-width="1.5"/><path d="M300 52 V47 M300 52 L304 54" stroke="#8a5a2b" stroke-width="1.5"/>
+    <polygon points="262,74 276,56 290,74" fill="#c4564b"/><polygon points="310,74 324,56 338,74" fill="#c4564b"/>
+    <g fill="#fff0b8"><rect x="270" y="90" width="9" height="14" rx="4"/><rect x="291" y="90" width="9" height="14" rx="4"/><rect x="312" y="90" width="9" height="14" rx="4"/><rect x="326" y="90" width="9" height="14" rx="4"/></g>
+    <path d="M292 150 V122 Q300 112 308 122 V150 Z" fill="#7a4a2a"/></g>`;
+  // bruk
+  h += `<rect x="0" y="140" width="600" height="10" fill="#8c6bb0" opacity=".55"/>`;
+  // krasnal
+  h += `<g transform="translate(520 92)">
+    <ellipse cx="22" cy="56" rx="18" ry="4" fill="#0003"/>
+    <rect x="12" y="34" width="20" height="20" rx="6" fill="#3b82c4"/><rect x="12" y="44" width="20" height="4" fill="#f2b84b"/>
+    <rect x="12" y="52" width="7" height="5" rx="2" fill="#5a3418"/><rect x="25" y="52" width="7" height="5" rx="2" fill="#5a3418"/>
+    <circle cx="22" cy="26" r="11" fill="#ffd6b3"/>
+    <path d="M10 28 Q22 56 34 28 Q22 36 10 28 Z" fill="#fff"/>
+    <polygon points="9,22 35,22 24,-14" fill="#d6372f"/><rect x="8" y="19" width="28" height="6" rx="3" fill="#b32a24"/>
+    <circle cx="18" cy="24" r="1.4" fill="#3b2250"/><circle cx="26" cy="24" r="1.4" fill="#3b2250"/><circle cx="22" cy="28" r="2" fill="#f0a08a"/>
+    <path d="M30 40 L40 32" stroke="#ffd6b3" stroke-width="4" stroke-linecap="round"/></g>`;
+  $("hero").innerHTML = h;
+}
+
 // ---------- rysowanie ubrań ----------
-function patternDefs(c){
+function patternDefs(c, text){
   const col = COLORS[c], hex = col.hex, ink = col.ink || "#fff";
-  const txt = (id,w,h,s,t) => `<pattern id="p-${id}" width="${w}" height="${h}" patternUnits="userSpaceOnUse"><rect width="${w}" height="${h}" fill="${hex}"/><text x="${w/2}" y="${h*0.75}" font-size="${s}" font-weight="bold" text-anchor="middle" fill="${ink}">${t}</text></pattern>`;
+  const t = (text || DEFAULT_TEXT).trim() || DEFAULT_TEXT;
+  const tw = Math.max(26, Math.round(t.length*6.4 + 12));
+  const txt = (id,w,h,s,v) => `<pattern id="p-${id}" width="${w}" height="${h}" patternUnits="userSpaceOnUse"><rect width="${w}" height="${h}" fill="${hex}"/><text x="${w/2}" y="${h*0.75}" font-size="${s}" font-weight="bold" text-anchor="middle" fill="${ink}">${v}</text></pattern>`;
   return `<defs>
     <pattern id="p-kropki" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="${hex}"/><circle cx="6" cy="6" r="2.5" fill="${ink}"/></pattern>
     <pattern id="p-paski" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="${hex}"/><rect width="12" height="5" fill="${ink}"/></pattern>
     <pattern id="p-kratka" width="14" height="14" patternUnits="userSpaceOnUse"><rect width="14" height="14" fill="${hex}"/><path d="M0 7H14M7 0V14" stroke="${ink}" stroke-width="2"/></pattern>
-    ${txt("gwiazdki",16,16,11,"★")}${txt("serduszka",16,16,11,"♥")}${txt("kwiatki",16,16,12,"✿")}${txt("napis",36,16,9,"Łucja")}
-    <pattern id="p-glit" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="${hex}"/>
+    ${txt("gwiazdki",16,16,11,"★")}${txt("serduszka",16,16,11,"♥")}${txt("kwiatki",16,16,12,"✿")}    <pattern id="p-glit" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="${hex}"/>
       <circle cx="2" cy="3" r=".9" fill="#ffe082"/><circle cx="7" cy="2" r=".7" fill="#fff"/><circle cx="5" cy="7" r="1" fill="#ffe082"/><circle cx="9" cy="8" r=".7" fill="#fff"/><circle cx="1" cy="8" r=".6" fill="#fff"/></pattern>
+    <linearGradient id="sh" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#1a0a2e" stop-opacity=".28"/></linearGradient>
   </defs>`;
 }
 function clothSVG(it, uid){
   const col = COLORS[it.color];
-  const p = it.pattern!=="gładki" ? it.pattern : (col.glitter ? "glit" : null);
+  const plain = it.pattern==="gładki" || it.pattern==="napis";   // napis = jeden napis na gładkim tle
+  const p = !plain ? it.pattern : (col.glitter ? "glit" : null);
   const fill = p ? `url(#${uid}p-${p})` : col.hex;
-  return patternDefs(it.color).replace(/id="p-/g,`id="${uid}p-`) +
-    `<path d="${TYPES[it.type].path}" fill="${fill}" stroke="#0004" stroke-width="1.5"/>${TYPES[it.type].extra||""}`;
+  const T = TYPES[it.type];
+  let label = "";
+  if (it.pattern==="napis") {
+    const t = ((it.text || DEFAULT_TEXT).trim() || DEFAULT_TEXT), [lx,ly,lw] = LABEL[it.type];
+    const size = Math.max(3.5, Math.min(11, lw/(t.length*0.6)));
+    label = `<text x="${lx}" y="${ly}" font-size="${size.toFixed(1)}" font-weight="bold" text-anchor="middle" fill="${col.ink||"#fff"}" stroke="${col.ink?'none':'#0000002e'}" stroke-width=".4">${esc(t)}</text>`;
+  }
+  return patternDefs(it.color, it.text).replace(/id="(p-|sh)/g,`id="${uid}$1`) +
+    `<path d="${T.path}" fill="${fill}" stroke="#3b2250" stroke-opacity=".55" stroke-width="1.4" stroke-linejoin="round"/>` +
+    `<path d="${T.path}" fill="url(#${uid}sh)"/>${T.extra||""}${label}`;
 }
 function placeMult(){ return PLACES.filter(p=>S.places.includes(p.id)).reduce((a,p)=>Math.max(a,p.mult),1); }
 function price(it){
@@ -213,52 +369,64 @@ function renderDesigner(){
   $("types").innerHTML = S.types.map(k=>`<button class="${draft.type===k?'sel':''}" onclick="draft.type='${k}';renderDesigner()">${TYPES[k].name}</button>`).join("");
   $("colors").innerHTML = S.colors.map(k=>`<button class="sw ${COLORS[k].glitter?'glit':''} ${draft.color===k?'sel':''}" style="${COLORS[k].glitter?'':'background:'+COLORS[k].hex}" title="${k}" onclick="draft.color='${k}';renderDesigner()"></button>`).join("");
   $("patterns").innerHTML = S.patterns.map(k=>`<button class="${draft.pattern===k?'sel':''}" onclick="draft.pattern='${k}';renderDesigner()">${PATTERNS[k].name}</button>`).join("");
+  $("txtbox").hidden = draft.pattern!=="napis";
   $("preview").innerHTML = clothSVG(draft,"pv");
   $("cost").textContent = MAKE_COST;
   $("make").disabled = S.coins < MAKE_COST || S.shelf.length >= SHELF_SIZE;
   $("make").title = S.shelf.length >= SHELF_SIZE ? "Półka jest pełna" : "";
 }
+const HOOK = '<svg class="hook" viewBox="0 0 36 18"><path d="M18 2 a3 3 0 1 1 3 3 L18 8 L3 16 H33 L18 8" fill="none" stroke="#b9801a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function renderShelf(){
   let h = "";
   for (let i=0;i<SHELF_SIZE;i++){
     const it = S.shelf[i];
     h += it
-      ? `<div class="item click" onclick="sell(${i})"><svg viewBox="0 0 100 120">${clothSVG(it,'s'+i)}</svg><div>${TYPES[it.type].name}</div><div><b>${fmt(price(it))}</b></div></div>`
-      : `<div class="item">pusto</div>`;
+      ? `<div class="item click" onclick="sell(${i},event)">${HOOK}<svg class="cl" viewBox="0 0 100 120">${clothSVG(it,'s'+i)}</svg><div>${TYPES[it.type].name}</div><span class="tag">${fmt(price(it))}</span></div>`
+      : `<div class="item empty">wolne miejsce</div>`;
   }
   $("shelf").innerHTML = h;
 }
 function renderShop(){
-  const group = (title, keys, data, kind) => {
+  const group = (title, data, kind) => {
     const locked = Object.keys(data).filter(k=>!S[kind].includes(k));
     if (!locked.length) return "";
     return `<h3>${title}</h3><div class="row">` + locked.map(k=>{
       const cost = data[k].unlock, label = data[k].name || k;
-      return `<button ${S.coins<cost?'disabled':''} onclick="unlock('${kind}','${k}')">🔒 ${label[0].toUpperCase()+label.slice(1)} – ${fmt(cost)}</button>`;
+      const dot = kind==="colors" ? `<span class="dot" style="background:${data[k].hex}"></span>` : "";
+      return `<button class="shopbtn" ${S.coins<cost?'disabled':''} onclick="unlock('${kind}','${k}')">${dot}${label[0].toUpperCase()+label.slice(1)} · ${fmt(cost)}</button>`;
     }).join("") + `</div>`;
   };
-  const h = group("Ubrania", null, TYPES, "types") + group("Kolory", null, COLORS, "colors") + group("Wzory", null, PATTERNS, "patterns");
+  const h = group("Ubrania", TYPES, "types") + group("Kolory", COLORS, "colors") + group("Wzory", PATTERNS, "patterns");
   $("shop").innerHTML = h || "Wszystko odblokowane! 🎉";
 }
 function renderPlaces(){
   $("places").innerHTML = PLACES.map(p=>{
     const own = S.places.includes(p.id);
-    return `<div class="place ${own?'':'locked'}"><span>${own?'✅':'🔒'} <b>${p.name}</b> – ceny ×${p.mult}, klientki co ${p.every/1000} s</span>` +
-      (own ? "" : `<button ${S.coins<p.cost?'disabled':''} onclick="buyPlace('${p.id}')">Otwórz (${fmt(p.cost)})</button>`) + `</div>`;
+    return `<div class="place ${own?'':'locked'}"><span>${own?'✦':'🔒'} <b>${p.name}</b><br><small>ceny ×${p.mult} · klientka co ${p.every/1000} s</small></span>` +
+      (own ? "" : `<button class="shopbtn" ${S.coins<p.cost?'disabled':''} onclick="buyPlace('${p.id}')">Otwórz · ${fmt(p.cost)}</button>`) + `</div>`;
   }).join("");
 }
-function renderCustomer(){
+function renderCustomer(ring){
   $("bye").hidden = !customer;
   $("customer").innerHTML = customer
-    ? `<span class="face">${customer.face}</span><div>Dzień dobry! Szukam:<div class="wants">${customer.wants.map(w=>`<span class="want ${w.done?'done':''}">${w.done?'✅':'🛍️'} ${wantText(w)}</span>`).join("")}</div></div>`
-    : `<span class="face">☕</span><span>Czekam na klientkę…</span>`;
+    ? `<div class="portrait ${ring?'ring':''}">${customer.face}</div><div class="bubble">Dzień dobry! Szukam:<div class="wants">${customer.wants.map(w=>`<span class="want ${w.done?'done':''}">${w.done?'✓':'♡'} ${wantText(w)}</span>`).join("")}</div></div>`
+    : `<div class="portrait">☕</div><div class="bubble">Czekam na klientkę…</div>`;
 }
 function renderAll(){
-  $("coins").textContent = fmt(S.coins);
+  $("coins").textContent = S.coins;
   $("mute").textContent = muted ? "🔕" : "🔔";
   renderDesigner(); renderShelf(); renderShop(); renderPlaces(); renderCustomer(); save();
 }
 function say(t){ $("msg").textContent = t; }
+
+// ---------- efekty ----------
+function fx(e, label){
+  const x = e && e.clientX || innerWidth/2, y = e && e.clientY || innerHeight/2;
+  const mk = (txt, cls, st) => { const d = document.createElement("div"); d.className = "float "+cls; d.textContent = txt;
+    d.style.left = x+"px"; d.style.top = y+"px"; Object.assign(d.style, st||{}); document.body.appendChild(d); setTimeout(()=>d.remove(), 1200); };
+  mk(label, "");
+  for (let i=0;i<7;i++){ const a = Math.PI*2*i/7; mk(i%2?"✦":"✧", "p", { "--dx":Math.cos(a)*46+"px", "--dy":Math.sin(a)*46-10+"px" }); }
+}
 
 // ---------- akcje ----------
 function make(){
@@ -269,7 +437,7 @@ function make(){
   say("Nowe ubranie na półce! ✨");
   renderAll();
 }
-function sell(i){
+function sell(i, e){
   if (!customer) { say("Nie ma teraz klientki. Poczekaj chwilę 🙂"); return; }
   const it = S.shelf[i];
   // wybierz najlepiej pasujące, jeszcze niezałatwione zamówienie
@@ -283,7 +451,7 @@ function sell(i){
   const gain = Math.round(price(it)*bestMult);
   best.done = true; customer.total += gain;
   S.coins += gain; S.shelf.splice(i,1);
-  sound.coin();
+  sound.coin(); fx(e, "+"+fmt(gain));
   if (customer.wants.every(w=>w.done)) {
     const bonus = customer.wants.length>1 ? Math.round(customer.total*ORDER_BONUS) : 0;
     S.coins += bonus;
@@ -312,7 +480,7 @@ function newCustomer(){
   for (let i=0;i<n;i++) wants.push({ type:rnd(S.types), color:rnd(S.colors), done:false });
   customer = { face:rnd(["👩","👧","👵","👩‍🦰","🧑‍🦱","👱‍♀️"]), wants, total:0 };
   sound.bell();
-  renderCustomer();
+  renderCustomer(true);
 }
 function interval(){ return Math.min(...PLACES.filter(p=>S.places.includes(p.id)).map(p=>p.every)); }
 function scheduleCustomer(){
@@ -323,7 +491,8 @@ function scheduleCustomer(){
 function resetGame(){
   if (!confirm("Na pewno zacząć od nowa? Stracisz wszystkie monety, ubrania i sklepy.")) return;
   S = fresh();
-  draft = { type:"sukienka", color:"różowy", pattern:"gładki" };
+  draft = { type:"sukienka", color:"różowy", pattern:"gładki", text:S.text };
+  $("txt").value = S.text;
   customer = null;
   say("Nowa gra! Powodzenia w butiku 🎀");
   scheduleCustomer();
@@ -341,10 +510,16 @@ $("reset").onclick = resetGame;
 $("make").onclick = make;
 $("bye").onclick = dismiss;
 $("mute").onclick = toggleMute;
+$("txt").value = S.text;
+$("txt").oninput = e => {   // bez pełnego renderu, żeby klawiatura nie znikała
+  draft.text = S.text = e.target.value; save();
+  $("preview").innerHTML = clothSVG(draft,"pv");
+};
+buildHero();
 renderAll();
 scheduleCustomer();
 // pierwsza klientka szybko, żeby nie czekać
-setTimeout(()=>{ if(!customer){ customer={face:"👩",wants:[{type:"sukienka",color:"różowy",done:false}],total:0}; sound.bell(); renderCustomer(); } }, 1500);
+setTimeout(()=>{ if(!customer){ customer={face:"👩",wants:[{type:"sukienka",color:"różowy",done:false}],total:0}; sound.bell(); renderCustomer(true); } }, 1500);
 </script>
 </body>
 </html>
