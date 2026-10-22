@@ -337,12 +337,20 @@ const DOOR_X = 300, GROUND = 143;
 const walkers = [];
 const gnome = { x: 540, dir: -1, pause: 0, phase: 0 };
 const REDUCED = matchMedia("(prefers-reduced-motion:reduce)").matches;
-function figureSVG(bags){
+function figureSVG(bags, thief){
   const dress = rnd(["#e85d9a","#7b5cd6","#2fa88a","#f0a030","#4a86d8","#d94f4f"]);
   const hair = rnd(["#5a3418","#2b1b12","#d9a441","#a8502a"]);
   const skin = rnd(["#ffd6b3","#f2c19a","#d9a074"]);
   const bagCol = rnd(["#ff7aa8","#ffd45e","#7fd1b9","#9db7ff"]);
   const bag = n => `<g transform="translate(${n?-13:11} ${n?-4:-2})"><path d="M2 -9 Q5 -15 8 -9" fill="none" stroke="#6b4a2a" stroke-width="1.2"/><rect width="10" height="11" y="-9" rx="1.5" fill="${bagCol}" stroke="#fff" stroke-width="1"/><path d="M5 -5 l1 2 -1 2 -1 -2z" fill="#fff"/></g>`;
+  if (thief) return `<ellipse cx="0" cy="1" rx="9" ry="2.5" fill="#0003"/>
+    <rect x="-5" y="-10" width="3" height="10" fill="#2b2233"/><rect x="2" y="-10" width="3" height="10" fill="#2b2233"/>
+    <rect x="-6" y="-2" width="5" height="3" rx="1.5" fill="#111"/><rect x="1" y="-2" width="5" height="3" rx="1.5" fill="#111"/>
+    <polygon points="-11,-8 -5,-30 5,-30 11,-8" fill="#3a2f4d"/><rect x="-1" y="-30" width="2" height="22" fill="#2b2233"/>
+    <circle cx="0" cy="-34" r="6.5" fill="${skin}"/>
+    <rect x="-6.5" y="-36.5" width="13" height="4.5" rx="1.5" fill="#111"/><circle cx="-2.4" cy="-34.3" r="1.1" fill="#fff"/><circle cx="2.4" cy="-34.3" r="1.1" fill="#fff"/>
+    <path d="M-9 -40 Q0 -50 9 -40 L11 -38 Q0 -42 -11 -38Z" fill="#2b2233"/><rect x="-8" y="-41" width="16" height="3" fill="#8c1f3a"/>
+    ${bags>0 ? `<g transform="translate(11 -2)"><path d="M2 -9 Q5 -15 8 -9" fill="none" stroke="#111" stroke-width="1.2"/><rect width="10" height="11" y="-9" rx="1.5" fill="#fff" stroke="#111" stroke-width="1"/><path d="M0 -6H10M0 -2H10" stroke="#111" stroke-width="1.6"/></g>` : ""}`;
   return `<ellipse cx="0" cy="1" rx="9" ry="2.5" fill="#0003"/>
     <rect x="-5" y="-10" width="3" height="10" fill="${skin}"/><rect x="2" y="-10" width="3" height="10" fill="${skin}"/>
     <rect x="-6" y="-2" width="5" height="3" rx="1.5" fill="#5a3418"/><rect x="1" y="-2" width="5" height="3" rx="1.5" fill="#5a3418"/>
@@ -353,10 +361,10 @@ function figureSVG(bags){
     ${bags>0 ? bag(0) : ""}${bags>1 ? bag(1) : ""}`;
 }
 // kind: "in" (idzie do drzwi i znika) albo "out" (wychodzi z drzwi, niesie torby)
-function spawnWalker(kind, bags){
+function spawnWalker(kind, bags, thief){
   if (REDUCED) return;
   const g = document.createElementNS("http://www.w3.org/2000/svg","g");
-  g.innerHTML = figureSVG(kind==="out" ? Math.min(2, bags) : 0);
+  g.innerHTML = figureSVG(kind==="out" ? Math.min(2, bags) : 0, thief);
   $("walkers").appendChild(g);
   const side = Math.random()<.5 ? -1 : 1, edge = DOOR_X + side*(210+Math.random()*60);
   const w = { g, kind, phase: Math.random()*6, dy: Math.random()*3,
@@ -532,7 +540,7 @@ function sell(i, e){
   }
   renderAll();
 }
-function dismiss(){ if (!customer) return; if (customer.thief) { say("Przejrzałaś złodziejkę! 🕵️ Dobra robota, nic nie zginęło."); sound.pop(); spawnWalker("out",0); customer=null; scheduleCustomer(); renderAll(); return; } spawnWalker("out", customer.wants.filter(w=>w.done).length); customer = null; say("Do widzenia, zapraszamy ponownie! 👋"); scheduleCustomer(); renderAll(); }
+function dismiss(){ if (!customer) return; if (customer.thief) { say("Przejrzałaś złodziejkę! 🕵️ Dobra robota, nic nie zginęło."); sound.pop(); spawnWalker("out",0,true); customer=null; scheduleCustomer(); renderAll(); return; } spawnWalker("out", customer.wants.filter(w=>w.done).length); customer = null; say("Do widzenia, zapraszamy ponownie! 👋"); scheduleCustomer(); renderAll(); }
 function unlock(kind, k){
   const data = kind==="types" ? TYPES : kind==="colors" ? COLORS : PATTERNS;
   if (S.coins < data[k].unlock) return;
@@ -547,8 +555,9 @@ function newCustomer(){
   const n = 1 + Math.floor(Math.random()*maxItems);
   const wants = [];
   for (let i=0;i<n;i++) wants.push({ type:rnd(S.types), color:rnd(S.colors), done:false });
-  spawnWalker("in", 0);
   const thief = sales>=3 && S.shelf.length>0 && Math.random()<0.15;
+  spawnWalker("in", 0, thief);
+  if (thief) say("Ktoś się dziwnie rozgląda… 🥸");
   const c = customer = { face: thief ? "🥸" : rnd(["👩","👧","👵","👩‍🦰","🧑‍🦱","👱‍♀️"]), wants, total:0, thief };
   if (thief) setTimeout(()=>steal(c), 9000);
   sound.bell();
@@ -561,7 +570,7 @@ function steal(c){
     say(`Ojej! To była złodziejka! Ukradła ${TYPES[it.type].acc} 😱 Następnym razem uważaj na 🥸`);
     sound.pop();
   }
-  spawnWalker("out", 1); customer = null; scheduleCustomer(); renderAll();
+  spawnWalker("out", 1, true); customer = null; scheduleCustomer(); renderAll();
 }
 function payRent(){
   const due = PLACES.filter(p=>S.places.includes(p.id)).reduce((a,p)=>a+p.rent,0);
