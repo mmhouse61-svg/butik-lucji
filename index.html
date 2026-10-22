@@ -47,6 +47,15 @@
   #coins::before { content:"zł"; display:grid; place-items:center; width:26px; height:26px; border-radius:50%; font-size:.7rem;
     background:radial-gradient(circle at 35% 30%,#ffe9a0,var(--gold) 60%,var(--gold-d)); color:#6b4300; }
   #mute { width:40px; height:40px; padding:0; border-radius:50%; font-size:1.2rem; }
+  header h1 { cursor:pointer; }
+  #welcome { position:fixed; inset:0; z-index:100; display:grid; place-items:center; padding:16px; background:#3d1a5ccc; }
+  #welcome[hidden] { display:none; }
+  #welcome .card { width:min(420px,100%); background:var(--cream); border-radius:22px; padding:20px; border:3px solid var(--gold); text-align:center; }
+  #welcome .row { justify-content:center; }
+  #welcome input { width:100%; font-size:1.3rem; padding:10px 14px; border-radius:14px; border:2px solid var(--gold); text-align:center; font-family:inherit; color:var(--ink); background:#fff; -webkit-user-select:text; user-select:text; }
+  #welcome .av { font-size:2rem; width:56px; height:56px; padding:0; border-radius:50%; }
+  #queue { display:flex; align-items:center; gap:6px; min-height:34px; margin-top:8px; font-size:.85rem; color:#8a6fa8; }
+  #queue .qf { font-size:1.4rem; width:34px; height:34px; display:grid; place-items:center; border-radius:50%; background:var(--lav); border:1px solid #d9a93c88; }
   /* ---------- plansza ---------- */
   #hero { display:block; width:100%; height:clamp(130px,24vw,200px); }
   main { max-width:920px; margin:0 auto; padding:0 12px 24px; display:grid; gap:14px; }
@@ -128,14 +137,25 @@
 </head>
 <body>
 <header>
-  <h1>Butik Łucji</h1>
+  <h1 id="title" title="Zmień imię i avatara">Butik <small id="who"></small></h1>
   <div class="right"><button id="mute" title="Dźwięk">🔔</button><div id="coins">0</div></div>
 </header>
+<div id="welcome" hidden>
+  <div class="card">
+    <h2>Witaj w butiku!</h2>
+    <h3>Jak masz na imię?</h3>
+    <input id="nameIn" maxlength="12" placeholder="Wpisz imię" autocomplete="off">
+    <h3>Wybierz avatara</h3>
+    <div class="row" id="avatars"></div>
+    <br><button class="main" id="go">Zaczynamy ✨</button>
+  </div>
+</div>
 <svg id="hero" viewBox="0 -24 600 174" preserveAspectRatio="xMidYMax slice" aria-hidden="true"></svg>
 <main>
   <section>
     <h2>Klientka</h2>
     <div class="customer" id="customer"></div>
+    <div id="queue"></div>
     <div id="msg"></div>
     <div class="row" style="margin-top:8px"><button id="bye" hidden>👋 Pożegnaj klientkę</button></div>
   </section>
@@ -246,15 +266,17 @@ const UNLOCK_X = 3, SLOW_X = 1.6, RENT_EVERY = 60000, RENT_PCT = 0.02, EVENT_EVE
 PLACES.forEach(p => { p.cost = Math.round(p.cost*UNLOCK_X); p.every = Math.round(p.every*SLOW_X); p.rent = Math.round(p.cost*RENT_PCT); });
 let eventMult = 1, sales = 0, sinceThief = 0, nextThief = 6 + Math.floor(Math.random()*3);
 const THIEF_MS = 6000;
+const QUEUE_MAX = 4;   // 1 obsługiwana + 4 w kolejce = 5 osób
+const AVATARS = ["👧","🧚‍♀️","👸","🦄","🐱","🦊","🐰","🧜‍♀️"], FACES = ["👩","👧","👵","👩‍🦰","🧑‍🦱","👱‍♀️"];
 const SHELF_SIZE = 6, MAKE_COST = 10, ORDER_BONUS = 0.15, DEFAULT_TEXT = "Łucja";
 
 const fresh = () => ({ coins:50, shelf:[], places:["rynek"],
   types:Object.keys(TYPES).filter(k=>!TYPES[k].unlock),
   colors:Object.keys(COLORS).filter(k=>!COLORS[k].unlock),
-  patterns:["gładki","kropki"], text:DEFAULT_TEXT });
+  patterns:["gładki","kropki"], text:DEFAULT_TEXT, name:"", avatar:AVATARS[0] });
 let S = { ...fresh(), ...(load() || {}) };
 let draft = { type:"sukienka", color:"różowy", pattern:"gładki", text:S.text };
-let customer = null, timer = null;
+let customer = null, timer = null, queue = [];
 let muted = false; try { muted = localStorage.getItem("butik-mute")==="1"; } catch(e){}
 
 function load(){ try { return JSON.parse(localStorage.getItem("butik")); } catch(e){ return null; } }
@@ -362,16 +384,18 @@ function figureSVG(bags, thief){
     ${bags>0 ? bag(0) : ""}${bags>1 ? bag(1) : ""}`;
 }
 // kind: "in" (idzie do drzwi i znika) albo "out" (wychodzi z drzwi, niesie torby)
-function spawnWalker(kind, bags, thief){
-  if (REDUCED) return;
+function spawnWalker(kind, bags, thief, slotX){
+  if (REDUCED) return null;
   const g = document.createElementNS("http://www.w3.org/2000/svg","g");
   g.innerHTML = figureSVG(kind==="out" ? Math.min(2, bags) : 0, thief);
   $("walkers").appendChild(g);
-  const side = Math.random()<.5 ? -1 : 1, edge = DOOR_X + side*(210+Math.random()*60);
-  const w = { g, kind, phase: Math.random()*6, dy: Math.random()*3,
-    x: kind==="in" ? edge : DOOR_X, to: kind==="in" ? DOOR_X : edge, speed: 50+Math.random()*14 };
+  const queued = slotX!==undefined, side = queued ? -1 : Math.random()<.5 ? -1 : 1, edge = DOOR_X + side*(210+Math.random()*60);
+  const w = { g, kind, phase: Math.random()*6, dy: queued ? 0 : Math.random()*3, hold: queued,
+    x: kind==="in" ? edge : DOOR_X, to: queued ? slotX : kind==="in" ? DOOR_X : edge, speed: 50+Math.random()*14 };
   walkers.push(w);
+  return w;
 }
+const slotX = i => DOOR_X - 30 - i*20;
 function animateHero(){
   if (REDUCED) { $("gnome").setAttribute("transform","translate(498 86)"); return; }
   let last = performance.now();
@@ -389,7 +413,11 @@ function animateHero(){
     $("gnome").setAttribute("transform",`translate(${gnome.x.toFixed(1)} ${86+bob}) scale(${gnome.dir} 1) translate(-22 0)`);
     // klientki
     for (let i=walkers.length-1;i>=0;i--){
-      const w = walkers[i], dir = Math.sign(w.to-w.x)||1;
+      const w = walkers[i];
+      if (w.hold && Math.abs(w.x-w.to)<.5) {   // stoi w kolejce
+        w.g.setAttribute("transform",`translate(${w.x.toFixed(1)} ${GROUND}) scale(1 1)`); continue;
+      }
+      const dir = Math.sign(w.to-w.x)||1;
       w.x += dir*w.speed*dt; w.phase += dt*10;
       const done = dir>0 ? w.x>=w.to : w.x<=w.to;
       const dd = Math.abs(w.x-DOOR_X);
@@ -397,7 +425,7 @@ function animateHero(){
       const bob = -Math.abs(Math.sin(w.phase))*2;
       w.g.setAttribute("opacity", op.toFixed(2));
       w.g.setAttribute("transform",`translate(${w.x.toFixed(1)} ${(GROUND+w.dy+bob).toFixed(1)}) scale(${dir} 1)`);
-      if (done) { w.g.remove(); walkers.splice(i,1); }
+      if (done) { if (w.hold) w.x = w.to; else { w.g.remove(); walkers.splice(i,1); } }
     }
     requestAnimationFrame(tick);
   })(last);
@@ -522,6 +550,7 @@ function renderCustomer(ring){
   $("customer").innerHTML = customer
     ? `<div class="portrait ${ring?'ring':''}">${customer.face}</div><div class="bubble">Dzień dobry! Szukam:<div class="wants">${customer.wants.map(w=>`<span class="want ${w.done?'done':''}">${w.done?'✓':'♡'} ${wantText(w)}</span>`).join("")}</div></div>`
     : `<div class="portrait">☕</div><div class="bubble">Czekam na klientkę…</div>`;
+  $("queue").innerHTML = queue.length ? `W kolejce:` + queue.map(c=>`<span class="qf">${c.qface}</span>`).join("") : "";
 }
 function renderAll(){
   $("coins").textContent = S.coins;
@@ -568,14 +597,13 @@ function sell(i, e){
     S.coins += bonus;
     say(`${txt} +${fmt(gain)}` + (bonus ? ` · Cały komplet! Bonus +${fmt(bonus)} 🎁` : ""));
     spawnWalker("out", customer.wants.length);
-    customer = null;
-    scheduleCustomer();
+    finishCustomer();
   } else {
     say(`${txt} +${fmt(gain)} · Jeszcze coś z listy!`);
   }
   renderAll();
 }
-function dismiss(){ if (!customer) return; if (customer.thief) { say("Przejrzałaś krasnala-łobuza! 🕵️ Dobra robota, nic nie zginęło."); sound.pop(); spawnWalker("out",0,true); customer=null; scheduleCustomer(); renderAll(); return; } spawnWalker("out", customer.wants.filter(w=>w.done).length); customer = null; say("Do widzenia, zapraszamy ponownie! 👋"); scheduleCustomer(); renderAll(); }
+function dismiss(){ if (!customer) return; if (customer.thief) { say("Przejrzałaś krasnala-łobuza! 🕵️ Dobra robota, nic nie zginęło."); sound.pop(); spawnWalker("out",0,true); finishCustomer(); renderAll(); return; } spawnWalker("out", customer.wants.filter(w=>w.done).length); say("Do widzenia, zapraszamy ponownie! 👋"); finishCustomer(); renderAll(); }
 function unlock(kind, k){
   const data = kind==="types" ? TYPES : kind==="colors" ? COLORS : PATTERNS;
   if (S.coins < data[k].unlock) return;
@@ -585,19 +613,32 @@ function unlock(kind, k){
 }
 function buyPlace(id){ const p=PLACES.find(x=>x.id===id); if (S.coins<p.cost) return; S.coins-=p.cost; S.places.push(id); sound.unlock(); say(`Otwierasz sklep: ${p.name}! 🎉`); scheduleCustomer(); renderAll(); }
 
+function activate(c){
+  customer = c;
+  if (c.thief) { say("Ktoś się dziwnie rozgląda… 😈 Szybko pożegnaj go (6 s)!"); setTimeout(()=>steal(c), THIEF_MS); }
+  sound.bell();
+  renderCustomer(true);
+}
 function newCustomer(){
+  if (customer && queue.length >= QUEUE_MAX) return;   // kolejka pełna, klientka odchodzi
   const maxItems = S.places.length>=3 ? 3 : 2;
   const n = 1 + Math.floor(Math.random()*maxItems);
   const wants = [];
   for (let i=0;i<n;i++) wants.push({ type:rnd(S.types), color:rnd(S.colors), done:false });
   const thief = ++sinceThief >= nextThief;
   if (thief) { sinceThief = 0; nextThief = 6 + Math.floor(Math.random()*3); }
-  spawnWalker("in", 0, thief);
-  if (thief) say("Ktoś się dziwnie rozgląda… 😈 Szybko pożegnaj go (6 s)!");
-  const c = customer = { face: thief ? "😈" : rnd(["👩","👧","👵","👩‍🦰","🧑‍🦱","👱‍♀️"]), wants, total:0, thief };
-  if (thief) setTimeout(()=>steal(c), THIEF_MS);
-  sound.bell();
-  renderCustomer(true);
+  const qface = rnd(FACES);
+  const c = { face: thief ? "😈" : qface, qface, wants, total:0, thief };
+  if (!customer) { spawnWalker("in", 0, thief); activate(c); return; }
+  c.w = spawnWalker("in", 0, thief, slotX(queue.length));
+  queue.push(c); sound.pop(); renderCustomer();
+}
+function finishCustomer(){   // klientka skończyła: następna z kolejki
+  customer = null;
+  const c = queue.shift();
+  queue.forEach((q,i)=>{ if (q.w) q.w.to = slotX(i); });
+  if (c) { if (c.w) { c.w.hold = false; c.w.to = DOOR_X; } activate(c); }
+  scheduleCustomer();
 }
 function steal(c){
   if (customer!==c || c.wants.every(w=>w.done)) return;
@@ -605,7 +646,7 @@ function steal(c){
   S.coins -= x;
   say(x ? `Ojej! To był krasnal-łobuz! Ukradł z kasy ${x} zł 😱 Następnym razem żegnaj 😈 szybciej!` : "Krasnal-łobuz zajrzał do pustej kasy i uciekł 😏");
   sound.pop();
-  spawnWalker("out", 1, true); customer = null; scheduleCustomer(); renderAll();
+  spawnWalker("out", 1, true); finishCustomer(); renderAll();
 }
 function payRent(){
   const due = PLACES.filter(p=>S.places.includes(p.id)).reduce((a,p)=>a+p.rent,0);
@@ -626,12 +667,14 @@ setInterval(()=>{ if (sales>=2) rnd(EVENTS)(); }, EVENT_EVERY);
 function interval(){ return Math.min(...PLACES.filter(p=>S.places.includes(p.id)).map(p=>p.every)); }
 function scheduleCustomer(){
   clearTimeout(timer);
-  timer = setTimeout(()=>{ if (!customer) newCustomer(); scheduleCustomer(); }, interval());
+  timer = setTimeout(()=>{ newCustomer(); scheduleCustomer(); }, interval());
 }
 
 function resetGame(){
   if (!confirm("Na pewno zacząć od nowa? Stracisz wszystkie monety, ubrania i sklepy.")) return;
-  S = fresh();
+  S = { ...fresh(), name:S.name, avatar:S.avatar };
+  S.text = S.name || DEFAULT_TEXT;
+  queue.forEach(c=>{ if (c.w) { c.w.hold = false; c.w.to = DOOR_X - 250; } }); queue = [];
   draft = { type:"sukienka", color:"różowy", pattern:"gładki", text:S.text };
   $("txt").value = S.text;
   customer = null;
@@ -647,6 +690,27 @@ function toggleMute(){
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
 
+function renderWho(){ $("who").textContent = S.name ? `${S.avatar} ${S.name}` : ""; }
+let pickedAvatar = S.avatar;
+function showWelcome(){
+  pickedAvatar = S.avatar; $("nameIn").value = S.name;
+  $("avatars").innerHTML = AVATARS.map(a=>`<button class="av ${a===pickedAvatar?'sel':''}" data-a="${a}">${a}</button>`).join("");
+  $("welcome").hidden = false;
+}
+$("avatars").onclick = e => { const b = e.target.closest("button"); if (!b) return; pickedAvatar = b.dataset.a;
+  [...$("avatars").children].forEach(x=>x.classList.toggle("sel", x===b)); sound.pop(); };
+$("go").onclick = () => {
+  const name = $("nameIn").value.trim();
+  if (!name) { $("nameIn").focus(); return; }
+  const prev = S.name;
+  if (S.text===DEFAULT_TEXT || S.text===prev || !S.text.trim()) { S.text = name; draft.text = name; $("txt").value = name; }
+  S.name = name; S.avatar = pickedAvatar;
+  $("welcome").hidden = true;
+  say(prev ? `Zmienione! Miło Cię widzieć, ${name} ${S.avatar}` : `Witaj w butiku, ${name}! ${S.avatar} Krasnal już czeka z klientkami 🎀`);
+  renderWho(); renderAll();
+};
+$("nameIn").onkeydown = e => { if (e.key==="Enter") $("go").click(); };
+$("title").onclick = showWelcome;
 $("reset").onclick = resetGame;
 $("make").onclick = make;
 $("bye").onclick = dismiss;
@@ -657,7 +721,8 @@ $("txt").oninput = e => {   // bez pełnego renderu, żeby klawiatura nie znika�
   $("preview").innerHTML = clothSVG(draft,"pv");
 };
 buildHero(); animateHero();
-renderAll();
+renderWho(); renderAll();
+if (S.name) say(`Witaj z powrotem, ${S.name}! ${S.avatar}`); else showWelcome();
 scheduleCustomer();
 // pierwsza klientka szybko, żeby nie czekać
 setTimeout(()=>{ if(!customer){ spawnWalker("in",0); customer={face:"👩",wants:[{type:"sukienka",color:"różowy",done:false}],total:0}; sound.bell(); renderCustomer(true); } }, 1500);
