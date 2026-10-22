@@ -244,7 +244,8 @@ const PLACES = [
 const UNLOCK_X = 3, SLOW_X = 1.6, RENT_EVERY = 60000, RENT_PCT = 0.02, EVENT_EVERY = 70000;
 [...Object.values(TYPES), ...Object.values(COLORS), ...Object.values(PATTERNS)].forEach(o => { o.unlock = Math.round(o.unlock*UNLOCK_X); });
 PLACES.forEach(p => { p.cost = Math.round(p.cost*UNLOCK_X); p.every = Math.round(p.every*SLOW_X); p.rent = Math.round(p.cost*RENT_PCT); });
-let eventMult = 1, sales = 0;
+let eventMult = 1, sales = 0, sinceThief = 0, nextThief = 6 + Math.floor(Math.random()*3);
+const THIEF_MS = 6000;
 const SHELF_SIZE = 6, MAKE_COST = 10, ORDER_BONUS = 0.15, DEFAULT_TEXT = "Łucja";
 
 const fresh = () => ({ coins:50, shelf:[], places:["rynek"],
@@ -589,21 +590,21 @@ function newCustomer(){
   const n = 1 + Math.floor(Math.random()*maxItems);
   const wants = [];
   for (let i=0;i<n;i++) wants.push({ type:rnd(S.types), color:rnd(S.colors), done:false });
-  const thief = sales>=3 && S.shelf.length>0 && Math.random()<0.15;
+  const thief = ++sinceThief >= nextThief;
+  if (thief) { sinceThief = 0; nextThief = 6 + Math.floor(Math.random()*3); }
   spawnWalker("in", 0, thief);
-  if (thief) say("Ktoś się dziwnie rozgląda… 😈");
+  if (thief) say("Ktoś się dziwnie rozgląda… 😈 Szybko pożegnaj go (6 s)!");
   const c = customer = { face: thief ? "😈" : rnd(["👩","👧","👵","👩‍🦰","🧑‍🦱","👱‍♀️"]), wants, total:0, thief };
-  if (thief) setTimeout(()=>steal(c), 9000);
+  if (thief) setTimeout(()=>steal(c), THIEF_MS);
   sound.bell();
   renderCustomer(true);
 }
 function steal(c){
   if (customer!==c || c.wants.every(w=>w.done)) return;
-  if (!S.shelf.length) { say("Podejrzany krasnal odszedł z pustymi rękami 😏"); } else {
-    const i = Math.floor(Math.random()*S.shelf.length), it = S.shelf.splice(i,1)[0];
-    say(`Ojej! To był krasnal-łobuz! Ukradł ${TYPES[it.type].acc} 😱 Następnym razem uważaj na 😈`);
-    sound.pop();
-  }
+  const x = Math.min(S.coins, 30 + Math.floor(Math.random()*21));
+  S.coins -= x;
+  say(x ? `Ojej! To był krasnal-łobuz! Ukradł z kasy ${x} zł 😱 Następnym razem żegnaj 😈 szybciej!` : "Krasnal-łobuz zajrzał do pustej kasy i uciekł 😏");
+  sound.pop();
   spawnWalker("out", 1, true); customer = null; scheduleCustomer(); renderAll();
 }
 function payRent(){
